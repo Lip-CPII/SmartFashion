@@ -21,7 +21,7 @@ It is suggested to installed the ffmpeg package for video-IO.
 sudo apt-get install libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libx264-dev libavresample-dev -Y
 ```
 
-Make sure the folders hierachy is similar as following:
+If pre-builts are used, download and unzip. Make sure the folders hierachy is similar as following:
 ```console
 /path/to/repository/
 SmartFashion
