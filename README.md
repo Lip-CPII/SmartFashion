@@ -10,8 +10,8 @@ Support in **Ubuntu 18** or newer and Microsoft **Windows 10**.
 
 **_It is recommanded to use QtCreator as the IDE._**
 
-- OpenCV 4.5 or newer
-- OpenMesh 9 or newer
+- OpenCV 4.5 or newer (Prebuilt [Ubuntu 20](https://ext.bravedbrothers.com/OpenCV_ubuntu.tar.gz)
+- OpenMesh 9 or newer (Prebuilt [Ubuntu 20](https://ext.bravedbrothers.com/OpenMesh.ubuntu.tar.gz)
 
 #### Ubuntu
 
