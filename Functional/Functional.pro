@@ -62,15 +62,6 @@ unix {
 
 !isEmpty(target.path): INSTALLS += target
 
-
-
-win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../../OpenMesh/lib/ -lOpenMeshCore
-else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../../OpenMesh/lib/ -lOpenMeshCored
-else:unix:!macx: LIBS += -L$$PWD/../../../OpenMesh/lib/ -lOpenMeshCore
-
-INCLUDEPATH += $$PWD/../../../OpenMesh/include
-DEPENDPATH += $$PWD/../../../OpenMesh/include
-
 win32:CONFIG(release, debug|release): LIBS += -L$$OUT_PWD/../Model/release/ -lModel
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$OUT_PWD/../Model/debug/ -lModel
 else:unix:!macx: LIBS += -L$$OUT_PWD/../Model/ -lModel
