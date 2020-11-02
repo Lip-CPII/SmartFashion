@@ -174,8 +174,18 @@ QWidget *LP_YOLO_Helper::DockUi()
         emit glUpdateRequest();
     };
     connect(play, &QPushButton::clicked,
-            [this,play, toQImage](){
-        play->setEnabled(false);
+            [this, toQImage](){
+        if ( mWatcher.isRunning()){
+            mLock.lockForWrite();
+            if ( mPause ){
+                mWait.wakeOne();
+                mPause = false;
+            }else{
+                mPause = true;
+            }
+            mLock.unlock();
+            return;
+        }
         auto future = QtConcurrent::run(&mPool,[this,toQImage](){
             if ( !mCVCam ){
                 return;
@@ -188,6 +198,9 @@ QWidget *LP_YOLO_Helper::DockUi()
             mLock.unlock();
             while (!frame.empty()){
                 mLock.lockForWrite();
+                if ( mPause ){
+                    mWait.wait(&mLock);
+                }
                 mImage = toQImage(frame);
                 mCurrentTime += frame_msec;
                 *mCVCam >> frame;
@@ -196,13 +209,7 @@ QWidget *LP_YOLO_Helper::DockUi()
                 emit glUpdateRequest();
             }
         });
-        QFutureWatcher<void> *watcher = new QFutureWatcher<void>();
-        connect(watcher, &QFutureWatcher<void>::finished,
-                [play,watcher](){
-            play->setEnabled(true);
-            delete watcher;
-        });
-        watcher->setFuture(future);
+        mWatcher.setFuture(future);
     });
 
     connect(forward, &QPushButton::clicked,

@@ -5,9 +5,6 @@ DEFINES += FUNCTIONAL_LIBRARY _USE_MATH_DEFINES
 
 CONFIG += c++17
 
-win32{
-QMAKE_CXXFLAGS+= -openmp
-}
 unix {
 QMAKE_CXXFLAGS += -fopenmp
 QMAKE_LFLAGS += -fopenmp
@@ -69,26 +66,36 @@ else:unix:!macx: LIBS += -L$$OUT_PWD/../Model/ -lModel
 INCLUDEPATH += $$PWD/../Model
 DEPENDPATH += $$PWD/../Model
 
-win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../../../../OpenCV/4_3_0/install/release/x64/vc16/lib/ \
-    -lopencv_core430 \
-    -lopencv_videoio430 \
-    -lopencv_imgproc430
+win32:CONFIG(release, debug|release): {
+    LIBS += -L$$PWD/../../OpenCV/install/release/lib/ \
+       -lopencv_core450 \
+       -lopencv_videoio450 \
+       -lopencv_imgproc450
 
-else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../../../../OpenCV/4_3_0/install/debug/x64/vc16/lib/ \
-    -lopencv_core430d \
-    -lopencv_videoio430d \
-    -lopencv_imgproc430d
+    INCLUDEPATH += $$PWD/../../OpenCV/install/release/include
+    DEPENDPATH += $$PWD/../../OpenCV/install/release/include
+}
+else:win32:CONFIG(debug, debug|release): {
+    LIBS += -L$$PWD/../../OpenCV/install/debug/lib/ \
+       -lopencv_core450d \
+       -lopencv_videoio450d \
+       -lopencv_imgproc450d
 
-else:unix:!macx: LIBS += -L$$PWD/../../OpenCV/install/lib/  \
-    -lopencv_core \
-    -lopencv_videoio \
-    -lopencv_imgproc
+    INCLUDEPATH += $$PWD/../../OpenCV/install/debug/include
+    DEPENDPATH += $$PWD/../../OpenCV/install/debug/include
+}
+else:unix:!macx: {
+    LIBS += -L$$PWD/../../OpenCV/install/lib/  \
+        -lopencv_core \
+        -lopencv_videoio \
+        -lopencv_imgproc
 
-INCLUDEPATH += $$PWD/../../OpenCV/install/include/opencv4
-DEPENDPATH += $$PWD/../../OpenCV/install/include/opencv4
+    INCLUDEPATH += $$PWD/../../OpenCV/install/include/opencv4
+    DEPENDPATH += $$PWD/../../OpenCV/install/include/opencv4
+}
 
-win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../OpenMesh/lib/release/ -lOpenMeshCore
-else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../OpenMesh/lib/debug/ -lOpenMeshCore
+win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../OpenMesh/lib/ -lOpenMeshCore
+else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../OpenMesh/lib/ -lOpenMeshCored
 else:unix:!macx: LIBS += -L$$PWD/../../OpenMesh/lib/ -lOpenMeshCore
 
 INCLUDEPATH += $$PWD/../../OpenMesh/include

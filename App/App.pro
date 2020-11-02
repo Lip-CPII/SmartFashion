@@ -36,16 +36,16 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 RESOURCES += \
     images/images.qrc
 
-win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../build/Model/release/ -lModel
-else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../build/Model/debug/ -lModel
-else:unix:!macx: LIBS += -L$$PWD/../../build/Model/ -lModel
+win32:CONFIG(release, debug|release): LIBS += -L$$OUT_PWD/../Model/release/ -lModel
+else:win32:CONFIG(debug, debug|release): LIBS += -L$$OUT_PWD/../Model/debug/ -lModel
+else:unix:!macx: LIBS += -L$$OUT_PWD/../Model/ -lModel
 
 INCLUDEPATH += $$PWD/../Model
 DEPENDPATH += $$PWD/../Model
 
-win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../build/Functional/release/ -lFunctional
-else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../build/Functional/debug/ -lFunctional
-else:unix:!macx: LIBS += -L$$PWD/../../build/Functional/ -lFunctional
+win32:CONFIG(release, debug|release): LIBS += -L$$OUT_PWD/../Functional/release/ -lFunctional
+else:win32:CONFIG(debug, debug|release): LIBS += -L$$OUT_PWD/../Functional/debug/ -lFunctional
+else:unix:!macx: LIBS += -L$$OUT_PWD/../Functional/ -lFunctional
 
 INCLUDEPATH += $$PWD/../Functional
 DEPENDPATH += $$PWD/../Functional

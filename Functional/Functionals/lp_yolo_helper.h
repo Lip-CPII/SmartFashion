@@ -2,11 +2,13 @@
 #define LP_YOLO_HELPER_H
 
 #include "lp_functional.h"
-#include "opencv2/opencv.hpp"
+#include <opencv2/opencv.hpp>
 #include <QReadWriteLock>
 #include <QThreadPool>
 #include <QVector3D>
 #include <QVector2D>
+#include <QWaitCondition>
+#include <QFutureWatcher>
 
 class QOpenGLBuffer;
 class QComboBox;
@@ -36,6 +38,7 @@ public slots:
     void exportYOLOset();
 
 private:
+    bool mPause = false;
     bool mbGreyScale = false;
     bool mbCrtlDown = false;
     bool mInitialized = false;
@@ -54,6 +57,8 @@ private:
     std::weak_ptr<LP_RendererCamImpl> mCam;
     QReadWriteLock mLock;
     QThreadPool mPool;
+    QWaitCondition mWait;
+    QFutureWatcher<void> mWatcher;
     struct YOLO_BoundingBox {
         std::pair<QVector2D,QVector2D> mPickPoints;
         std::pair<QVector3D,QVector3D> mPickPoints3D;

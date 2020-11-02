@@ -8,3 +8,4 @@ SUBDIRS += \
 
 App.depends = Functional
 Functional.depends = Model
+LP_Plugin_Import.depends = Functional

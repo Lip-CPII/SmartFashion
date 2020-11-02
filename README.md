@@ -42,3 +42,9 @@ OpenCV
    
 ```
 _If custom builds of OpenCV and OpenMesh are preferred, please adjust the Library paths in the .pro's accordingly_
+
+![Slicer](/images/slicer01.jpg)
+
+![Knitting Instructions](/images/knitinstruction.jpg)
+
+![YOLO Annotator](/images/yolo01.jpg)

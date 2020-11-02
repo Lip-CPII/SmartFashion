@@ -20,7 +20,7 @@ HEADERS += \
     lp_mesh_slicer.h
 
 # Default rules for deployment.
-target.path = $$PWD/../../build/App/plugins
+target.path = $$OUT_PWD/../App/plugins
 
 !isEmpty(target.path): INSTALLS += target
 
@@ -33,6 +33,13 @@ else:unix:!macx: LIBS += -L$$OUT_PWD/../Model/ -lModel
 INCLUDEPATH += $$PWD/../Model
 DEPENDPATH += $$PWD/../Model
 
+win32:CONFIG(release, debug|release): LIBS += -L$$OUT_PWD/../Functional/release/ -lFunctional
+else:win32:CONFIG(debug, debug|release): LIBS += -L$$OUT_PWD/../Functional/debug/ -lFunctional
+else:unix:!macx: LIBS += -L$$OUT_PWD/../Functional/ -lFunctional
+
+INCLUDEPATH += $$PWD/../Functional
+DEPENDPATH += $$PWD/../Functional
+
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../OpenMesh/lib/ -lOpenMeshCore
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../OpenMesh/lib/ -lOpenMeshCored
 else:unix:!macx: LIBS += -L$$PWD/../../OpenMesh/lib/ -lOpenMeshCore
@@ -41,9 +48,4 @@ INCLUDEPATH += $$PWD/../../OpenMesh/include
 DEPENDPATH += $$PWD/../../OpenMesh/include
 
 
-win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../build/Functional/release/ -lFunctional
-else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../build/Functional/debug/ -lFunctional
-else:unix:!macx: LIBS += -L$$PWD/../../build/Functional/ -lFunctional
 
-INCLUDEPATH += $$PWD/../Functional
-DEPENDPATH += $$PWD/../Functional
