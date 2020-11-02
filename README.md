@@ -3,7 +3,7 @@
 
 ## Install
 
-Support in **Ubuntu 18** or newer and Microsoft **Windows 10**.
+Support in **Ubuntu 20** or newer and Microsoft **Windows 10**.
 
 ### Dependencies
 - Qt 5.15 ([Here](https://www.qt.io/download-open-source), scroll to bottom and download)
