@@ -20,3 +20,24 @@ It is suggested to installed the ffmpeg package for video-IO.
 ```console
 sudo apt-get install libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libx264-dev libavresample-dev -Y
 ```
+
+Make sure the folders hierachy is similar as following:
+```console
+/path/to/repository/
+SmartFashion
+   |- App
+   |- Functional
+   |- Model
+   |- LP_Plugin_Import
+OpenMesh
+   |- include
+   |- lib
+   |- share
+OpenCV
+   |-install
+        |- include
+        |- bin
+        |- lib
+        |- share
+   
+```
