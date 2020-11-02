@@ -21,7 +21,7 @@ It is suggested to installed the ffmpeg package for video-IO.
 sudo apt-get install libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libx264-dev libavresample-dev -Y
 ```
 
-If pre-builts are used, download and unzip. Make sure the folders hierachy is similar as following:
+If pre-builts are used, unzip the files after download. Copy/Move the unzipped folders into the repository directory. Make sure the folders hierachy is similar as following:
 ```console
 /path/to/repository/
 SmartFashion
@@ -41,3 +41,4 @@ OpenCV
         |- share
    
 ```
+_If custom builds of OpenCV and OpenMesh are preferred, please adjust the Library paths in the .pro's accordingly_
