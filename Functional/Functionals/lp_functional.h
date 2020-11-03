@@ -101,6 +101,12 @@ signals:
      * FunctionalRender()
      */
     void glContextRequest(GLDestroy_CB);
+
+    /**
+     * @brief uiUpdateProgress
+     * Show the progress of any progress requires a progress bar
+     */
+    void uiUpdateProgress(int);
 };
 
 

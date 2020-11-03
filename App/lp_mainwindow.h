@@ -18,6 +18,7 @@ public:
     ~LP_MainWindow();
 
 protected:
+    void loadProgressWidget();
     void loadRenderers();
     void loadCommandHistory();
     void loadDocuments();
@@ -31,7 +32,6 @@ protected:
 private:
     Ui::LP_MainWindow *ui;
     std::unique_ptr<QPluginLoader> mPluginLoader;
-
 
 };
 #endif // LP_MAINWINDOW_H

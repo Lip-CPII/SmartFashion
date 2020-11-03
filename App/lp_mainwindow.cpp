@@ -17,6 +17,7 @@
 
 #include <QDir>
 #include <QPluginLoader>
+#include <QProgressBar>
 
 
 LP_MainWindow::LP_MainWindow(QWidget *parent)
@@ -24,6 +25,9 @@ LP_MainWindow::LP_MainWindow(QWidget *parent)
     , ui(new Ui::LP_MainWindow)
 {
     ui->setupUi(this);
+
+    //Progress
+    loadProgressWidget();
 
     //Renderers
     loadRenderers();
@@ -47,6 +51,20 @@ LP_MainWindow::LP_MainWindow(QWidget *parent)
 LP_MainWindow::~LP_MainWindow()
 {
     delete ui;
+}
+
+void LP_MainWindow::loadProgressWidget()
+{
+    ui->progressBar->setRange(0, 1);
+    ui->progressBar->setValue(1);
+    ui->progressBar->setAlignment(Qt::AlignCenter);
+    ui->progressBar->hide();
+//    QHBoxLayout *layout = new QHBoxLayout;
+//    QProgressBar *bar = new QProgressBar(ui->progressBar);
+//    layout->addWidget(bar);
+
+//    ui->progressBar->setLayout(layout);
+//    ui->progressBar->show();
 }
 
 void LP_MainWindow::loadRenderers()
@@ -86,13 +104,25 @@ void LP_MainWindow::loadCommandHistory()
 
     connect(LP_CommandGroup::gCommandGroup->ActiveStack(),
             &QUndoStack::indexChanged,qApp,
-            []([[maybe_unused]]int idx){
+            [this]([[maybe_unused]]const int &idx){
                 QApplication::restoreOverrideCursor();
                 if ( !QApplication::overrideCursor()){
                     //qFatal("Event filter removed");
                     qApp->removeEventFilter(LP_CommandGroup::gCommandGroup.get());
+                    ui->progressBar->hide();
+                    ui->progressBar->setRange(0,1);
+                    ui->progressBar->setValue(1);
+                }else{
+                    ui->progressBar->setValue(ui->progressBar->value()+1);
                 }
                 LP_Functional::ClearCurrent();
+            });
+
+    connect(LP_CommandGroup::gCommandGroup->ActiveStack(),
+            &LP_CommandStack::Pushed,qApp,
+            [this](){
+                ui->progressBar->setMaximum( ui->progressBar->maximum()+1);
+                ui->progressBar->show();
             });
 }
 
@@ -158,7 +188,7 @@ void LP_MainWindow::loadFunctionals()
         }else{  //Move the functional
             e->setData(std::move(it.value().second->data()));
         }
-        connect(e, &QAction::triggered,[e,this](bool checked){
+        connect(e, &QAction::triggered, [e,this](bool checked){
             Q_UNUSED(checked)
             LP_Functional::ClearCurrent();      //For plugin, current will be destructed when PluginLoader::unload()
             auto f = e->data().value<RegFuncPtr>()(nullptr);
@@ -186,11 +216,12 @@ void LP_MainWindow::loadFunctionals()
                     &LP_GLRenderer::glContextResponse,
                     Qt::BlockingQueuedConnection);
             connect(f,
-                    &LP_ActionPlugin::destroyed,
+                    &LP_Functional::destroyed,
                     f,
                     [this,f](){
                         ui->openGLWidget->removeEventFilter(f);
                     },Qt::DirectConnection);
+
 
             LP_Functional::SetCurrent(f);
 

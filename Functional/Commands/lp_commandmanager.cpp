@@ -30,6 +30,7 @@ LP_CommandStack::~LP_CommandStack()
 
 void LP_CommandStack::Push(LP_Command *cmd)
 {
+    emit Pushed();
     QApplication::setOverrideCursor(Qt::WaitCursor);
     qApp->installEventFilter(LP_CommandGroup::gCommandGroup.get());
 

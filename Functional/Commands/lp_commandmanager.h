@@ -32,6 +32,10 @@ public:
     bool Save(QDataStream &o);
     void Load(QDataStream &in);
     static std::shared_ptr<LP_CommandStack> gCommands;  //TODO Multi stack
+
+signals:
+    void Pushed();
+
 private:
     QThread mThread;
 };
