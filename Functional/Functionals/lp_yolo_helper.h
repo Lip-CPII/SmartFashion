@@ -20,6 +20,7 @@ class LP_YOLO_Helper : public LP_Functional
     REGISTER_FUNCTIONAL
 public:
     explicit LP_YOLO_Helper(QObject *parent = nullptr);
+    virtual ~LP_YOLO_Helper();
 
     // LP_Functional interface
     QWidget *DockUi() override;
@@ -38,6 +39,7 @@ public slots:
     void exportYOLOset();
 
 private:
+    bool mStop = false;
     bool mPause = false;
     bool mbGreyScale = false;
     bool mbCrtlDown = false;

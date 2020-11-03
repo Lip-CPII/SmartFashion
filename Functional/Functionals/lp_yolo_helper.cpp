@@ -29,6 +29,17 @@ LP_YOLO_Helper::LP_YOLO_Helper(QObject *parent) : LP_Functional(parent)
     mCurrentBoundingBox.first = QVector2D(std::numeric_limits<float>::max(),0.0f);
 }
 
+LP_YOLO_Helper::~LP_YOLO_Helper()
+{
+    if ( !mWatcher.isFinished()){
+        mLock.lockForWrite();
+        mStop = true;
+        mLock.unlock();
+        mWait.wakeOne();
+        mWatcher.waitForFinished();
+    }
+}
+
 QWidget *LP_YOLO_Helper::DockUi()
 {
     mWidget = std::make_shared<QWidget>();
@@ -199,6 +210,10 @@ QWidget *LP_YOLO_Helper::DockUi()
                 mLock.lockForWrite();
                 if ( mPause ){
                     mWait.wait(&mLock);
+                }
+                if ( mStop ){
+                    mLock.unlock();
+                    break;
                 }
                 mImage = toQImage(frame);
                 mCurrentTime += frame_msec;

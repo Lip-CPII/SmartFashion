@@ -219,7 +219,7 @@ void LP_GLRenderer::updateTarget()
 
     mCam->setDiagonal(diag);
     mCam->SetTarget(center);
-    mCam->SynchronizeProjection();
+    mCam->RefreshCamera();
 }
 
 void LP_GLRenderer::glContextResponse(LP_GLRenderer::EmptyCB _cb)
