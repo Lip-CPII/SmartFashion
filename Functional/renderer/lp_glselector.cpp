@@ -37,6 +37,108 @@ std::vector<QVector3D> LP_GLSelector::gen24ColorVector(const int &limit)
     return _c;
 }
 
+void LP_GLSelector::appendObject(const LP_Objectw &o)
+{
+    QWriteLocker locker(&mLock);
+    mSelectedObjs.insert(o);
+}
+
+void LP_GLSelector::removeObject(const LP_Objectw &o)
+{
+    QWriteLocker locker(&mLock);
+    mSelectedObjs.remove(o);
+}
+
+void LP_GLSelector::clear()
+{
+    QWriteLocker locker(&mLock);
+    mSelectedObjs.clear();
+}
+
+const QSet<LP_Objectw> &LP_GLSelector::Objects()
+{
+    return mSelectedObjs;
+}
+
+void LP_GLSelector::DrawLabel(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebufferObject *fbo, const LP_RendererCam &cam)
+{
+    Q_UNUSED(surf)
+    Q_UNUSED(fbo)
+
+    auto f = ctx->extraFunctions();
+    f->glEnable( GL_DEPTH_TEST );
+
+    f->glCullFace(GL_BACK);
+    f->glEnable(GL_CULL_FACE);
+    f->glEnable(GL_BLEND);
+    f->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    f->glDepthFunc(GL_LEQUAL);
+
+    fbo->bind();
+    auto proj = cam->ProjectionMatrix(),
+         view = cam->ViewMatrix();
+
+    mLock.lockForRead();
+
+    mProgram->bind();
+
+    mProgram->setUniformValue("m4_mvp", proj*view);
+    mProgram->setUniformValue("v4_color", QVector4D(1.0f,0.1f,0.1f,0.5f));
+
+    for ( auto &o : mSelectedObjs ){
+        o.lock()->DrawSelect(ctx, surf, fbo, mProgram, cam);
+    }
+
+    mProgram->release();
+
+    mLock.unlock();
+
+    fbo->release();
+    f->glDisable( GL_BLEND );
+    f->glDisable( GL_DEPTH_TEST );
+    f->glDisable( GL_CULL_FACE );
+    f->glDepthFunc(GL_LESS);
+}
+
+void LP_GLSelector::InitialGL(QOpenGLContext *ctx, QSurface *surf)
+{
+    std::string vsh =
+            "attribute vec3 a_pos;\n"
+            "uniform mat4 m4_mvp;\n"
+            "void main(){\n"
+            "   gl_Position = m4_mvp*vec4(a_pos, 1.0);\n"
+            "}";
+    std::string fsh =
+            "uniform vec4 v4_color;\n"
+            "void main(){\n"
+            "   gl_FragColor = v4_color;\n"
+            "}";
+
+    ctx->makeCurrent(surf);
+
+    auto prog = new QOpenGLShaderProgram;
+    prog->addShaderFromSourceCode(QOpenGLShader::Vertex,vsh.c_str());
+    prog->addShaderFromSourceCode(QOpenGLShader::Fragment,fsh.data());
+    if ( !prog->create() || !prog->link()){
+        delete prog;
+        ctx->doneCurrent();
+        throw std::runtime_error("Initialize selection program failed");
+    }
+    mProgram = prog;
+
+    ctx->doneCurrent();
+}
+
+void LP_GLSelector::DestroyGL(QOpenGLContext *ctx, QSurface *surf)
+{
+    ctx->makeCurrent(surf);
+
+    delete mProgram;
+    mProgram = nullptr;
+
+    ctx->doneCurrent();
+}
+
 LP_Objectw LP_GLSelector::SelectInWorld(const QString &renderername, const QPoint &pos, int w, int h)
 {
     auto v_ = g_Renderers.find(renderername);
@@ -178,11 +280,18 @@ LP_Objectw LP_GLSelector::SelectInWorld(const QString &renderername, const QPoin
         return LP_Objectw();
     }
     std::vector<QUuid> l;
+    const size_t nO = pDoc->Objects().size() - 1;
     auto it = pDoc->Objects().begin();
     for ( auto &i : selections ){
+        if ( i > nO ){
+            qDebug() << "Selection error : " << i;
+            continue;
+        }
         l.emplace_back((*std::next(it,i)).lock()->Uuid());
     }
-
+    if ( selections.empty()){
+        return LP_Objectw();
+    }
     qDebug() << selections << l;
     return pDoc->FindObject(l.front());
 }

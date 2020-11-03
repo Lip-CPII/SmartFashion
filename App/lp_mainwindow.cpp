@@ -59,12 +59,6 @@ void LP_MainWindow::loadProgressWidget()
     ui->progressBar->setValue(1);
     ui->progressBar->setAlignment(Qt::AlignCenter);
     ui->progressBar->hide();
-//    QHBoxLayout *layout = new QHBoxLayout;
-//    QProgressBar *bar = new QProgressBar(ui->progressBar);
-//    layout->addWidget(bar);
-
-//    ui->progressBar->setLayout(layout);
-//    ui->progressBar->show();
 }
 
 void LP_MainWindow::loadRenderers()
@@ -139,6 +133,7 @@ void LP_MainWindow::loadDocuments()
         if ( model ){
             delete tree->model();
             tree->setModel(model);
+            loadSelector();
         }
     },Qt::QueuedConnection);
 
@@ -150,6 +145,7 @@ void LP_MainWindow::loadDocuments()
             ui->openGLWidget_2->Renderer(), &LP_GLRenderer::initObjectGL);
     connect(&LP_Document::gDoc, &LP_Document::requestGLCleanup,
             ui->openGLWidget_2->Renderer(), &LP_GLRenderer::destroyObjectGL);
+
 }
 
 void LP_MainWindow::loadFunctionals()
@@ -233,7 +229,51 @@ void LP_MainWindow::loadFunctionals()
 
 void LP_MainWindow::loadSelector()
 {
+    auto pSelector = ui->treeView->selectionModel();
+    if ( !pSelector ){
+        return;
+    }
+    connect(pSelector, &QItemSelectionModel::selectionChanged,
+            [this](const QItemSelection &selected, const QItemSelection &deselected){
+        //qDebug() << selected << " " << deselected;
+        auto pM = qobject_cast<QStandardItemModel*>(ui->treeView->model());
+        if ( !pM ){
+            return;
+        }
+        for ( auto &i : selected.indexes()){
+            auto o = pM->itemFromIndex(i);
+            if ( 0 != i.column()){
+                continue;   //TODO add control for items
+            }
+            LP_Objectw w_o = o->data().value<LP_Object>();
+            g_GLSelector->appendObject(w_o);
+        }
+        for ( auto &i : deselected.indexes()){
+            auto o = pM->itemFromIndex(i);
+            if ( 0 != i.column()){
+                continue;   //TODO add control for items
+            }
+            LP_Objectw w_o = o->data().value<LP_Object>();
+            g_GLSelector->removeObject(w_o);
+        }
 
+        ui->openGLWidget->Renderer()->UpdateGL();
+    });
+    connect(g_GLSelector.get(),
+            &LP_GLSelector::ClearSelected,
+            ui->treeView->selectionModel(),
+            &QItemSelectionModel::clearSelection);
+    connect(g_GLSelector.get(),
+            &LP_GLSelector::Selected,
+            [this](const QUuid &id){
+        auto pM = ui->treeView->model();
+        auto ids = pM->match(pM->index(0, 0),
+                             Qt::UserRole + 2,
+                             id, 1, Qt::MatchRecursive | Qt::MatchExactly);
+        for ( auto &id : ids ){
+            ui->treeView->selectionModel()->select(id, QItemSelectionModel::Rows | QItemSelectionModel::Select);
+        }
+    });
 }
 
 void LP_MainWindow::loadPlugins(const QString &path, QMenuBar *menubar)

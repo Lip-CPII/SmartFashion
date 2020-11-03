@@ -52,6 +52,9 @@ QStandardItemModel *LP_Document::ToQStandardModel() const
         auto cur = new QStandardItem(o->TypeName().data());
 
         cur->setToolTip(o->Uuid().toString());
+        cur->setData(QVariant::fromValue(o), Qt::UserRole + 1);
+        cur->setData(o->Uuid(), Qt::UserRole + 2);
+
         for ( auto c : o->mChildren ){
             auto cp = parse(c.lock());
             cur->appendRow(cp);
@@ -64,6 +67,7 @@ QStandardItemModel *LP_Document::ToQStandardModel() const
     for ( auto o : mObjects){
         model->appendRow( parse(o.lock()));
     }
+
     return model;
 }
 

@@ -1,4 +1,5 @@
 #include "lp_glrenderer.h"
+#include "lp_glselector.h"
 
 #include "lp_renderercam.h"
 
@@ -95,6 +96,7 @@ void LP_GLRenderer::initGL(QOpenGLContext *context)
 
     mContext->doneCurrent();
 
+    g_GLSelector->InitialGL(mContext, mSurface.get());
 }
 
 void LP_GLRenderer::reshapeGL(int w, int h)
@@ -146,6 +148,12 @@ void LP_GLRenderer::updateGL()
         o.lock()->Draw(mContext, mSurface.get(), mFBO, mCam, option);
     }
 
+    g_GLSelector->DrawLabel(mContext, mSurface.get(), mFBO, mCam );
+
+//    for ( auto &o : g_GLSelector->Objects()){
+//        o.lock()->DrawSelect(mContext, mSurface.get(), mFBO, 0, mCam );
+//    }
+
     dLock.unlock();
 
     emit postRender(mContext, mSurface.get(), mFBO, mCam, QVariant());
@@ -174,6 +182,7 @@ void LP_GLRenderer::clearScene()
 void LP_GLRenderer::destroyObjectGL(LP_Objectw o)
 {
     //Make sure the object is not longer in gDoc
+    g_GLSelector->removeObject(o); //Remove if selected
     o.lock()->DrawCleanUp(mContext, mSurface.get());
     updateTarget();
     updateGL();
@@ -254,5 +263,6 @@ void LP_GLRenderer::destroyGL()
 
     mContext->doneCurrent();
 
+    g_GLSelector->DestroyGL(mContext, mSurface.get());
     mContext->deleteLater();
 }

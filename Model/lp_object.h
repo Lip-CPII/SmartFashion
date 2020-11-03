@@ -89,4 +89,6 @@ inline uint qHash(const LP_Objectw &c){
         return (qHash(c.lock()->Uuid()));
     }
 
+Q_DECLARE_METATYPE(LP_Object)
+
 #endif // LP_OBJECT_H

@@ -4,13 +4,15 @@
 #include "Functional_global.h"
 #include <memory>
 #include <QObject>
-#include <QMap>
+#include <QSet>
 
+#include <QUuid>
+#include <QReadWriteLock>
 
 class QOpenGLContext;
 class QSurface;
 class QOpenGLFramebufferObject;
-
+class QOpenGLShaderProgram;
 
 class LP_ObjectImpl;
 typedef std::shared_ptr<LP_ObjectImpl> LP_Object;
@@ -45,10 +47,34 @@ public:
     static std::vector<QVector3D> g_24ColorVector;
 
     static std::vector<QVector3D> gen24ColorVector(const int &limit);
+
+    /********************************************/
+    /*DONT USE THESE FUNCTIONS*/
+    void appendObject(const LP_Objectw &o );
+    void removeObject(const LP_Objectw &o );
+    void clear();
+    /********************************************/
+
+
+    const QSet<LP_Objectw> &Objects();
+
+    Q_INVOKABLE
+    void DrawLabel(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebufferObject *fbo,
+                    const LP_RendererCam& cam);
+
+    Q_INVOKABLE
+    void InitialGL(QOpenGLContext *ctx, QSurface *surf);
+
+    Q_INVOKABLE
+    void DestroyGL(QOpenGLContext *ctx, QSurface *surf);
 signals:
+    void Selected(QUuid);
+    void ClearSelected();
 
 private:
-
+    QSet<LP_Objectw> mSelectedObjs;
+    QOpenGLShaderProgram *mProgram = nullptr;
+    QReadWriteLock mLock;
 };
 
 extern FUNCTIONAL_EXPORT std::unique_ptr<LP_GLSelector> g_GLSelector;

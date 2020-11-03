@@ -179,12 +179,21 @@ void LP_OpenGLWidget::mouseReleaseEvent(QMouseEvent *event)
 {
     if ( Qt::LeftButton == event->button()){
         QString renderer = objectName() == "openGLWidget" ? "Shade" : "Normal";//TODO non-fixed
+
+        emit g_GLSelector->ClearSelected();
         //Perform selection
-        QMetaObject::invokeMethod(g_GLSelector.get(),
-                                  "SelectInWorld",
-                                  Qt::QueuedConnection,
-                                  Q_ARG(QString, renderer),
-                                  Q_ARG(QPoint, event->pos()));
+        LP_Objectw o = g_GLSelector->SelectInWorld(renderer, event->pos());
+
+//        QMetaObject::invokeMethod(g_GLSelector.get(),
+//                                  "SelectInWorld",
+//                                  Qt::QueuedConnection,
+//                                  Q_RETURN_ARG(LP_Objectw, o),
+//                                  Q_ARG(QString, renderer),
+//                                  Q_ARG(QPoint, event->pos()));
+
+        if ( o.lock()){
+            emit g_GLSelector->Selected(o.lock()->Uuid());
+        }
         QMetaObject::invokeMethod(mRenderer,
                                   "updateGL",Qt::QueuedConnection);
         event->accept();
