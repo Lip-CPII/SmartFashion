@@ -52,6 +52,12 @@ OpenCV
 ```
 _If custom builds of OpenCV and OpenMesh are preferred, please adjust the Library paths in the .pro's accordingly_
 
+## Build
+
+Open the Smart_Fashion.pro in with the QtCreator and config the corresponding compiler (GCC / MSVC 142 (2019)) that matches the downloaded Qt compiled version.
+
+![QtCreator](images/QtCreator.JPG)
+
 ## Example Snapshots
 
 #### Plugins -> Mesh Slicer
