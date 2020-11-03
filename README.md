@@ -20,7 +20,6 @@ It is suggested to installed the ffmpeg package for video-IO.
 ```console
 sudo apt-get install libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libx264-dev libavresample-dev -Y
 ```
-___
 
 If pre-builts are used, unzip the files after download. E.g. in Linux
 ```console
@@ -29,8 +28,9 @@ mv OpenCV_ubuntu OpenCV
 tar -xzvf OpenMesh_ubuntu.tar.gz
 mv OpenMesh_ubuntu OpenMesh
 ```
+___
 
-Copy/Move the unzipped folders into the repository directory. Make sure the folders hierachy is similar as following:
+Copy/Move the **unzipped** & **renamed** folders into the repository directory. Make sure the folders hierachy is similar as following:
 ```console
 /path/to/repository/
 SmartFashion
