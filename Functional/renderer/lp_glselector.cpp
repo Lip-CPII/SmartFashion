@@ -41,6 +41,7 @@ LP_Objectw LP_GLSelector::SelectInWorld(const QString &renderername, const QPoin
 {
     auto v_ = g_Renderers.find(renderername);
     if ( g_Renderers.cend() == v_ ){
+        qDebug() << "Unknown renderer : " << renderername;
         return LP_Objectw();
     }
 

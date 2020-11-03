@@ -33,6 +33,9 @@ bool LP_File_Open::Run()
     tmp.Run();  //Using the function internally
 
     QDataStream in(&file);
+    int qver=-1;
+    in >> qver;
+    in.setVersion(qver);
 
     auto stack = LP_CommandGroup::gCommandGroup->ActiveStack();
 

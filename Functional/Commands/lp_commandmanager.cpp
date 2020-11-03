@@ -67,7 +67,8 @@ void LP_CommandStack::Load(QDataStream &in)
         in >> id;
         auto it = reg->find(id);
         if ( regEnd == it ){
-            throw std::runtime_error("Unknow command or invalid file");
+            throw std::runtime_error(tr("Unknown command (%1) or invalid file")
+                                     .arg(id.data()).toStdString());
         }
         auto cmd = it.value()(nullptr);
         if ( cmd->Load(in)){

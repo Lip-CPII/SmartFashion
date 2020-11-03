@@ -34,6 +34,7 @@ bool LP_File_Save::Run()
     }
 
     QDataStream out(&file);
+    out << out.version();
 
     auto stack = LP_CommandGroup::gCommandGroup->ActiveStack();
 

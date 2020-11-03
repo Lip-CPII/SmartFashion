@@ -1,6 +1,7 @@
 #include "lp_openglwidget.h"
 
 #include "renderer/lp_glrenderer.h"
+#include "renderer/lp_glselector.h"
 #include "lp_renderercam.h"
 #include "Functionals/lp_functional.h"
 
@@ -177,11 +178,13 @@ void LP_OpenGLWidget::mousePressEvent(QMouseEvent *event)
 void LP_OpenGLWidget::mouseReleaseEvent(QMouseEvent *event)
 {
     if ( Qt::LeftButton == event->button()){
+        QString renderer = objectName() == "openGLWidget" ? "Shade" : "Normal";//TODO non-fixed
         //Perform selection
-        QMetaObject::invokeMethod(mRenderer,
-                                  "select",
+        QMetaObject::invokeMethod(g_GLSelector.get(),
+                                  "SelectInWorld",
                                   Qt::QueuedConnection,
-                                  Q_ARG(QPoint,event->pos()));
+                                  Q_ARG(QString, renderer),
+                                  Q_ARG(QPoint, event->pos()));
         QMetaObject::invokeMethod(mRenderer,
                                   "updateGL",Qt::QueuedConnection);
         event->accept();
