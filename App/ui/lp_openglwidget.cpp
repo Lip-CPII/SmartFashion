@@ -10,6 +10,8 @@
 #include <QWheelEvent>
 #include <QKeyEvent>
 #include <QtMath>
+#include <QPainter>
+#include <QPainterPath>
 #include <QDebug>
 
 struct LP_OpenGLWidget::member {
@@ -142,6 +144,26 @@ void LP_OpenGLWidget::paintGL()
     if (LP_Functional::mCurrentFunctional){
         LP_Functional::mCurrentFunctional->PainterDraw(this);
     }
+
+    auto &cam = mRenderer->mCam;
+
+    QPainter painter(this);
+    QPainterPath path;
+    float hh = 0.5f*cam->ResolutionY();
+    QFont orgFont = painter.font();
+    int fontSize(13);
+    QFont font("Arial", fontSize);
+    QString text;
+    if ( cam->IsPerspective()){
+        text = "PERSP";
+    }else{
+        text = "ORTHO";
+    }
+
+    painter.setFont(font);
+    painter.setPen(QColor(cam->IsPerspective()?Qt::yellow:Qt::white));
+    painter.drawText(QPointF(5.f, 2.f*hh-5.f), text );
+    painter.setFont(orgFont);
 }
 
 

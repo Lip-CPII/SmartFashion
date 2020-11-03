@@ -114,7 +114,6 @@ QWidget *LP_YOLO_Helper::DockUi()
         }
 
         bool rc = mCVCam->open(mVideoFile.toStdString().c_str());
-//        bool rc = mCVCam->open(0);
         Q_ASSERT(rc);
         auto fps = mCVCam->get(cv::CAP_PROP_FPS);
         auto framecount = uint(mCVCam->get(cv::CAP_PROP_FRAME_COUNT));
