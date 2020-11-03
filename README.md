@@ -11,7 +11,7 @@ Support in **Ubuntu 20** or newer and Microsoft **Windows 10**.
 **_It is recommanded to use QtCreator as the IDE._**
 
 - OpenCV 4.5 or newer (Prebuilt [Ubuntu 20](https://ext.bravedbrothers.com/OpenCV_ubuntu.tar.gz) / [Windows10](https://ext.bravedbrothers.com/OpenCV.7z))
-- OpenMesh 9 or newer (Prebuilt [Ubuntu 20](https://ext.bravedbrothers.com/OpenMesh.ubuntu.tar.gz) / [Windows10](https://ext.bravedbrothers.com/OpenMesh.7z))
+- OpenMesh 9 or newer (Prebuilt [Ubuntu 20](https://ext.bravedbrothers.com/OpenMesh_ubuntu.tar.gz) / [Windows10](https://ext.bravedbrothers.com/OpenMesh.7z))
 
 #### _Ubuntu_
 
@@ -26,6 +26,8 @@ If pre-builts are used, unzip the files after download. E.g. in Linux
 ```console
 tar -xzvf OpenCV_ubuntu.tar.gz
 mv OpenCV_ubuntu OpenCV
+tar -xzvf OpenMesh_ubuntu.tar.gz
+mv OpenMesh_ubuntu OpenMesh
 ```
 
 Copy/Move the unzipped folders into the repository directory. Make sure the folders hierachy is similar as following:
