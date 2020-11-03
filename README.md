@@ -43,8 +43,18 @@ OpenCV
 ```
 _If custom builds of OpenCV and OpenMesh are preferred, please adjust the Library paths in the .pro's accordingly_
 
+## Example Snapshots
+
+#### Plugins -> Mesh Slicer
+
 ![Slicer](/images/slicer01.JPG)
 
+
+#### Tools -> Knitting Instructions
+
 ![Knitting Instructions](/images/knitinstruction.JPG)
+
+
+#### Tools -> YOLO Helper
 
 ![YOLO Annotator](/images/yolo01.JPG)
