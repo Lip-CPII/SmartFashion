@@ -55,8 +55,10 @@ _If custom builds of OpenCV and OpenMesh are preferred, please adjust the Librar
 ## Build
 
 Open the Smart_Fashion.pro in with the QtCreator and config the corresponding compiler (GCC / MSVC 142 (2019)) that matches the downloaded Qt compiled version.
+* _Use `qmake` and `make` if command-line is preferred._
 
 ![QtCreator](images/QtCreator.JPG)
+
 
 ## Example Snapshots
 
