@@ -50,9 +50,21 @@ else:unix:!macx: LIBS += -L$$OUT_PWD/../Functional/ -lFunctional
 INCLUDEPATH += $$PWD/../Functional
 DEPENDPATH += $$PWD/../Functional
 
+
+#else:unix:!macx: LIBS += -L$$OUT_PWD/../Functional/ -lFunctional
+
+win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../OpenCV/install/release/bin \
+    -L$$PWD/../../OpenMesh/lib
+
+else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../OpenCV/install/debug/bin \
+    -L$$PWD/../../OpenMesh/lib
+
 unix:!macx: LIBS += -L$$PWD/../../OpenCV/install/lib/  \
     -lopencv_core \
     -lopencv_videoio \
     -lopencv_imgproc
 
 unix:!macx: LIBS += -L$$PWD/../../OpenMesh/lib/ -lOpenMeshCore
+
+#LIBS += -L$$PWD/../../OpenCV/install/release/bin \
+#        -L$$PWD/../../OpenMesh/lib

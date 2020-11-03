@@ -100,3 +100,14 @@ else:unix:!macx: LIBS += -L$$PWD/../../OpenMesh/lib/ -lOpenMeshCore
 
 INCLUDEPATH += $$PWD/../../OpenMesh/include
 DEPENDPATH += $$PWD/../../OpenMesh/include
+
+win32:CONFIG(release, debug|release): {
+PATH += $$PWD/../../OpenCV/install/release/bin
+INCLUDEPATH += $$PWD/../../OpenCV/install/release/bin
+DEPENDPATH += $$PWD/../../OpenCV/install/release/bin
+}
+else:win32:CONFIG(debug, debug|release): {
+LIBS += -L$$PWD/../../OpenCV/install/debug/bin
+INCLUDEPATH += $$PWD/../../OpenCV/install/debug/bin
+DEPENDPATH += $$PWD/../../OpenCV/install/debug/bin
+}
