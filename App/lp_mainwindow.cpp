@@ -129,12 +129,17 @@ void LP_MainWindow::loadDocuments()
         auto pDoc = &LP_Document::gDoc;
         auto tree = ui->treeView;
 
-        auto model = pDoc->ToQStandardModel();
-        if ( model ){
-            delete tree->model();
+        if (!tree->model()){
+            auto model = pDoc->ToQStandardModel();
+            if ( model ){
+                tree->setModel(model);
+                loadSelector();
+            }
+        }else{
+            auto model = pDoc->ToQStandardModel();
             tree->setModel(model);
-            loadSelector();
         }
+
     },Qt::QueuedConnection);
 
     connect(&LP_Document::gDoc, &LP_Document::requestGLSetup,
@@ -242,11 +247,21 @@ void LP_MainWindow::loadSelector()
         }
         for ( auto &i : selected.indexes()){
             auto o = pM->itemFromIndex(i);
-            if ( 0 != i.column()){
-                continue;   //TODO add control for items
+            switch (i.column()) {
+            case 0:
+            {
+                LP_Objectw w_o = o->data().value<LP_Object>();
+                g_GLSelector->_appendObject(w_o);
             }
-            LP_Objectw w_o = o->data().value<LP_Object>();
-            g_GLSelector->_appendObject(w_o);
+                break;
+            case 1:
+            {
+
+            }
+                break;
+            default:
+                break;
+            }
         }
         for ( auto &i : deselected.indexes()){
             auto o = pM->itemFromIndex(i);
@@ -271,6 +286,30 @@ void LP_MainWindow::loadSelector()
                              id, 1, Qt::MatchRecursive | Qt::MatchExactly);
         for ( auto &id : ids ){
             ui->treeView->selectionModel()->select(id, QItemSelectionModel::Rows | QItemSelectionModel::Select);
+        }
+    });
+    connect(ui->treeView,
+            &QTreeView::clicked,
+            [this](const QModelIndex &index){
+        auto pM = qobject_cast<QStandardItemModel*>(ui->treeView->model());
+        auto o = pM->itemFromIndex(index);
+        switch (index.column()) {
+        case 1:
+        {
+            auto oid = pM->itemFromIndex(pM->index(index.row(),2));
+            auto pDoc = &LP_Document::gDoc;
+            if (QChar(0x25CE) == o->text()){//Show
+                o->setText(QChar(0x25C9));
+                pDoc->ShowObject(oid->text());
+            }else{//Hide
+                o->setText(QChar(0x25CE));
+                pDoc->HideObject(oid->text());
+            }
+            ui->openGLWidget->Renderer()->UpdateGL();
+        }
+            break;
+        default:
+            break;
         }
     });
 }

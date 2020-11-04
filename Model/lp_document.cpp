@@ -39,11 +39,30 @@ void LP_Document::RemoveObject(LP_Objectw &&ent, LP_Objectw &&parent)
     emit requestGLCleanup(ent);
 }
 
+void LP_Document::HideObject(const QUuid &id)
+{
+    auto o = FindObject(id, &mObjects);
+    if ( o.lock()){
+        mObjects.remove(o);
+        mHiddens.insert(o);
+    }
+}
+
+void LP_Document::ShowObject(const QUuid &id)
+{
+    auto o = FindObject(id, &mHiddens);
+    if ( o.lock()){
+        mHiddens.remove(o);
+        mObjects.insert(o);
+    }
+}
+
 QStandardItemModel *LP_Document::ToQStandardModel() const
 {
-    auto model = new QStandardItemModel();
-    QStringList headers = {"Items", "ID"};
-    model->setHorizontalHeaderLabels(headers);
+    mModel->clear();
+
+    QStringList headers = {"Items", "Hide","ID"};
+    mModel->setHorizontalHeaderLabels(headers);
 
     std::function<QStandardItem*(LP_Object&&)> parse;
 
@@ -65,10 +84,12 @@ QStandardItemModel *LP_Document::ToQStandardModel() const
     QReadLocker locker(&mLock);
 
     for ( auto o : mObjects){
-        model->appendRow( parse(o.lock()));
+        mModel->appendRow( {parse(o.lock()),
+                           new QStandardItem(QChar(0x25C9)),
+                           new QStandardItem(o.lock()->Uuid().toString())});
     }
 
-    return model;
+    return mModel.get();
 }
 
 const QSet<LP_Objectw>& LP_Document::Objects() const

@@ -15,12 +15,17 @@ public:
 
     void AddObject(LP_Objectw &&ent, LP_Objectw &&parent = LP_Objectw());
     void RemoveObject(LP_Objectw &&ent, LP_Objectw &&parent = LP_Objectw());
+    void HideObject(const QUuid &id);
+    void ShowObject(const QUuid &id);
 
-    inline LP_Objectw FindObject(const QUuid &id){
+    inline LP_Objectw FindObject(const QUuid &id, const QSet<LP_Objectw> *list = nullptr){
         static LP_Object proxy = LP_ObjectImpl::Create();
         proxy->mUid = id;
-        auto obj = mObjects.find(proxy);
-        if ( obj == mObjects.cend()){
+        if ( !list ){
+            list = &mObjects;
+        }
+        auto obj = list->find(proxy);
+        if ( obj == list->cend()){
             return LP_Objectw();
         }
         return *obj;
@@ -28,6 +33,8 @@ public:
 
     QStandardItemModel *ToQStandardModel() const;
     const QSet<LP_Objectw> &Objects() const;
+    const QSet<LP_Objectw> &Hiddens() const;
+
     void ResetDocument();
     QReadWriteLock& Lock() const;
 
@@ -38,6 +45,7 @@ public:
 
 protected:
     QSet<LP_Objectw> mObjects;
+    QSet<LP_Objectw> mHiddens;
 signals:
     void updateTreeView();
     void requestGLSetup(LP_Objectw);
@@ -46,6 +54,7 @@ signals:
 private:
     mutable QReadWriteLock mLock;
     QString mFileName;
+    std::unique_ptr<QStandardItemModel> mModel = std::make_unique<QStandardItemModel>();
 };
 
 #endif // LP_DOCUMENT_H
