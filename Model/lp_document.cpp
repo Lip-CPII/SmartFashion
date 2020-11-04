@@ -41,6 +41,7 @@ void LP_Document::RemoveObject(LP_Objectw &&ent, LP_Objectw &&parent)
 
 void LP_Document::HideObject(const QUuid &id)
 {
+    QWriteLocker locker(&mLock);
     auto o = FindObject(id, &mObjects);
     if ( o.lock()){
         mObjects.remove(o);
@@ -50,6 +51,7 @@ void LP_Document::HideObject(const QUuid &id)
 
 void LP_Document::ShowObject(const QUuid &id)
 {
+    QWriteLocker locker(&mLock);
     auto o = FindObject(id, &mHiddens);
     if ( o.lock()){
         mHiddens.remove(o);

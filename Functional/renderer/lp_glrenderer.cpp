@@ -150,10 +150,6 @@ void LP_GLRenderer::updateGL()
 
     g_GLSelector->DrawLabel(mContext, mSurface.get(), mFBO, mCam );
 
-//    for ( auto &o : g_GLSelector->Objects()){
-//        o.lock()->DrawSelect(mContext, mSurface.get(), mFBO, 0, mCam );
-//    }
-
     dLock.unlock();
 
     emit postRender(mContext, mSurface.get(), mFBO, mCam, QVariant());
