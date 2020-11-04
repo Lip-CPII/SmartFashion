@@ -6,14 +6,25 @@
 Support in **Ubuntu 20** or newer and Microsoft **Windows 10**.
 
 ### Dependencies
-- Qt 5.15.x ([Here](https://www.qt.io/download-open-source), scroll to bottom and download)
+- Qt 5.15.x ([Here](https://www.qt.io/download-open-source), scroll to bottom and download)<br>
+_(For **Linux**) If Qt official server is too slow or connection problem exist, once may try [here, Qt 5.15.1](https://ext.bravedbrothers.com/Qt.tar.gz)._
 
 **_It is recommanded to use QtCreator as the IDE._**
 
 - OpenCV 4.5 or newer (Prebuilt [Ubuntu 20](https://ext.bravedbrothers.com/OpenCV_ubuntu.tar.gz) / [Windows10](https://ext.bravedbrothers.com/OpenCV.7z))
 - OpenMesh 9 or newer (Prebuilt [Ubuntu 20](https://ext.bravedbrothers.com/OpenMesh_ubuntu.tar.gz) / [Windows10](https://ext.bravedbrothers.com/OpenMesh.7z))
 
+#### _Windows_
+
+MSVC 142 (2019) is required which can be downloaded and use for free with the [Community version](https://visualstudio.microsoft.com/downloads/)
+
 #### _Ubuntu_
+
+GCC has to be installed with the following commands.
+```console
+sudo apt-get update
+sudo apt-get install build-essential
+```
 
 It is suggested to installed the ffmpeg package for video-IO.
 
