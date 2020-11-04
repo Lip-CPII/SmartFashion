@@ -14,7 +14,17 @@ _(For **Linux**) If Qt official server is too slow or connection problem exist, 
 - OpenCV 4.5 or newer (Prebuilt [Ubuntu 20](https://ext.bravedbrothers.com/OpenCV_ubuntu.tar.gz) / [Windows10](https://ext.bravedbrothers.com/OpenCV.7z))
 - OpenMesh 9 or newer (Prebuilt [Ubuntu 20](https://ext.bravedbrothers.com/OpenMesh_ubuntu.tar.gz) / [Windows10](https://ext.bravedbrothers.com/OpenMesh.7z))
 
+#### _Windows_
+
+MSVC 142 (2019) is required which can be downloaded and use for free with the [Community version](https://visualstudio.microsoft.com/downloads/)
+
 #### _Ubuntu_
+
+GCC has to be installed with the following commands.
+```console
+sudo apt-get update
+sudo apt-get install build-essential
+```
 
 It is suggested to installed the ffmpeg package for video-IO.
 
