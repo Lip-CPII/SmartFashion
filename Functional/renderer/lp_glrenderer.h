@@ -40,11 +40,15 @@ public:
     /**
      * @brief RunInContext
      * @param cb
-     * @return
      */
     Q_INVOKABLE void RunInContext(LP_GLRendererCB cb, void *data = nullptr){
         Q_ASSERT(QThread::currentThread() == &mThread);
-        cb(mContext, mSurface.get(), mFBO, mCam, data);
+        if (mLock.tryLockForWrite(2000)){
+            cb(mContext, mSurface.get(), mFBO, mCam, data);
+            mLock.unlock();
+        }else{
+            throw std::runtime_error("To busy to Handle the task");
+        }
     }
 
     /**

@@ -194,8 +194,8 @@ void LP_OpenGLWidget::mouseReleaseEvent(QMouseEvent *event)
         if ( o.lock()){
             emit g_GLSelector->Selected(o.lock()->Uuid());
         }
-        QMetaObject::invokeMethod(mRenderer,
-                                  "updateGL",Qt::QueuedConnection);
+        mRenderer->UpdateGL();
+
         event->accept();
     }
 }

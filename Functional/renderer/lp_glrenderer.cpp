@@ -165,6 +165,7 @@ void LP_GLRenderer::updateGL()
     mContext->doneCurrent();
 
     mLock.unlock();
+
     emit textureUpdated(mTexture);
 }
 

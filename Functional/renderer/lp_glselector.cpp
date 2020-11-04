@@ -214,7 +214,7 @@ LP_Objectw LP_GLSelector::SelectInWorld(const QString &renderername, const QPoin
         f->glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
         const uint nPix  = sw*sh;
-        const uint nChn  = 4;
+        constexpr uint nChn  = 4;
         unsigned char *color = new unsigned char[nPix*nChn];
         float *depth    = new float[nPix];
 
@@ -280,18 +280,13 @@ LP_Objectw LP_GLSelector::SelectInWorld(const QString &renderername, const QPoin
         return LP_Objectw();
     }
     std::vector<QUuid> l;
-    const size_t nO = pDoc->Objects().size() - 1;
+    const size_t nO = pDoc->Objects().size();
     auto it = pDoc->Objects().begin();
     for ( auto &i : selections ){
-        if ( i > nO ){
-            qDebug() << "Selection error : " << i;
-            continue;
-        }
+        assert(i<nO);
         l.emplace_back((*std::next(it,i)).lock()->Uuid());
     }
-    if ( selections.empty()){
-        return LP_Objectw();
-    }
+    assert(!l.empty());
     qDebug() << selections << l;
     return pDoc->FindObject(l.front());
 }
@@ -311,6 +306,7 @@ void LP_GLSelector::SelectCustom(const QString &renderername, void *cb, void *da
                               Qt::BlockingQueuedConnection,
                               Q_ARG(LP_GLRendererCB,*_cb),
                               Q_ARG(void*, data));
+
 }
 
 std::vector<uint> LP_GLSelector::SelectPoints3D(const QString &renderername, const std::vector<float[3]> &pts, const QPoint &pos, bool mask, int w, int h)
@@ -451,6 +447,7 @@ std::vector<uint> LP_GLSelector::SelectPoints3D(const QString &renderername, con
     };
 
     auto renderer = v_.value();
+
     QMetaObject::invokeMethod(renderer,
                               "RunInContext",
                               Qt::BlockingQueuedConnection,
