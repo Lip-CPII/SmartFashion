@@ -6,7 +6,8 @@
 Support in **Ubuntu 20** or newer and Microsoft **Windows 10**.
 
 ### Dependencies
-- Qt 5.15.x ([Here](https://www.qt.io/download-open-source), scroll to bottom and download)
+- Qt 5.15.x ([Here](https://www.qt.io/download-open-source), scroll to bottom and download)<br>
+_(For **Linux**) If Qt official server is too slow or connection problem exist, once may try [here](https://ext.bravedbrothers.com/Qt.tar.gz)._
 
 **_It is recommanded to use QtCreator as the IDE._**
 
