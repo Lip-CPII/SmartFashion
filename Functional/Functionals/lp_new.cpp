@@ -1,7 +1,7 @@
 #include "lp_new.h"
 #include "lp_document.h"
 #include "renderer/lp_glrenderer.h"
-
+#include "renderer/lp_glselector.h"
 #include "Commands/lp_commandmanager.h"
 
 REGISTER_FUNCTIONAL_IMPLEMENT(LP_New, New, menuFile)
@@ -21,7 +21,8 @@ bool LP_New::Run()
     QMetaObject::invokeMethod(renderer,
                               "clearScene",
                               Qt::BlockingQueuedConnection);
-
+    QMetaObject::invokeMethod(g_GLSelector.get(),
+                              "ClearSelected");
     /**
      * @brief Clear the document container. Should be called after
      * clearing up the GL resources
