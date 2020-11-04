@@ -90,7 +90,11 @@ QStandardItemModel *LP_Document::ToQStandardModel() const
                            new QStandardItem(QChar(0x25C9)),
                            new QStandardItem(o.lock()->Uuid().toString())});
     }
-
+    for ( auto o : mHiddens){
+        mModel->appendRow( {parse(o.lock()),
+                           new QStandardItem(QChar(0x25CE)),
+                           new QStandardItem(o.lock()->Uuid().toString())});
+    }
     return mModel.get();
 }
 
