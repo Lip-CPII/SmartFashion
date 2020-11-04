@@ -12,6 +12,7 @@
 #include <QMouseEvent>
 #include <QOpenGLContext>
 #include <QOpenGLShaderProgram>
+#include <QOpenGLFramebufferObject>
 #include <QOpenGLExtraFunctions>
 #include <QDoubleSpinBox>
 #include <QLabel>
@@ -92,6 +93,7 @@ QWidget *LP_Mesh_Slicer::DockUi()
 bool LP_Mesh_Slicer::Run()
 {
     mPool.setMaxThreadCount(std::max(1, mPool.maxThreadCount()-2));
+    g_GLSelector->ClearSelected();
     return false;
 }
 
@@ -163,7 +165,6 @@ bool LP_Mesh_Slicer::eventFilter(QObject *watched, QEvent *event)
 void LP_Mesh_Slicer::FunctionalRender(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebufferObject *fbo, const LP_RendererCam &cam, const QVariant &options)
 {
     Q_UNUSED(surf)
-    Q_UNUSED(fbo)
     Q_UNUSED(options)
 
     if ( !mInitialized ){
@@ -192,10 +193,13 @@ void LP_Mesh_Slicer::FunctionalRender(QOpenGLContext *ctx, QSurface *surf, QOpen
 
     auto f = ctx->extraFunctions();
 
-    f->glEnable(GL_DEPTH_TEST);
+    fbo->bind();
+
+    f->glEnable( GL_DEPTH_TEST );
+    f->glDepthFunc( GL_LEQUAL );
     f->glLineWidth(2.0f);
-    const auto sqrtEps = std::numeric_limits<float>::epsilon();
-    f->glDepthRangef(-sqrtEps,1.0f - sqrtEps);
+    constexpr auto sqrtEps = std::numeric_limits<float>::epsilon();
+    f->glDepthRangef(-sqrtEps, 1.0f - sqrtEps);
     mProgram->bind();
     mProgram->setUniformValue("m4_mvp", proj * view );
     mProgram->setUniformValue("v4_color", QVector4D(1.0,1.0,0.0,1.0) );
@@ -226,7 +230,9 @@ void LP_Mesh_Slicer::FunctionalRender(QOpenGLContext *ctx, QSurface *surf, QOpen
     mProgram->disableAttributeArray("a_pos");
     mProgram->release();
     f->glDisable(GL_DEPTH_TEST);
-    f->glDepthRangef(0.0f,1.0f);
+    f->glDepthFunc( GL_LESS );
+    f->glDepthRangef(0.0f, 1.0f);
+    fbo->release();
 }
 
 void LP_Mesh_Slicer::initializeGL()

@@ -49,10 +49,10 @@ public:
     static std::vector<QVector3D> gen24ColorVector(const int &limit);
 
     /********************************************/
-    /*DONT USE THESE FUNCTIONS*/
-    void appendObject(const LP_Objectw &o );
-    void removeObject(const LP_Objectw &o );
-    void clear();
+    /*DONT USE THESE FUNCTIONS DIRECTLY*/
+    void _appendObject(const LP_Objectw &o );
+    void _removeObject(const LP_Objectw &o );
+    void _clear();
     /********************************************/
 
 

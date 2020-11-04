@@ -183,7 +183,7 @@ void LP_GLRenderer::clearScene()
 void LP_GLRenderer::destroyObjectGL(LP_Objectw o)
 {
     //Make sure the object is not longer in gDoc
-    g_GLSelector->removeObject(o); //Remove if selected
+    g_GLSelector->_removeObject(o); //Remove if selected
     o.lock()->DrawCleanUp(mContext, mSurface.get());
     updateTarget();
     updateGL();

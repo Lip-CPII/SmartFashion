@@ -50,6 +50,7 @@ QWidget *LP_Pick_Feature_Points::DockUi()
 
 bool LP_Pick_Feature_Points::Run()
 {
+    g_GLSelector->ClearSelected();
     return false;
 }
 

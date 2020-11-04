@@ -37,19 +37,19 @@ std::vector<QVector3D> LP_GLSelector::gen24ColorVector(const int &limit)
     return _c;
 }
 
-void LP_GLSelector::appendObject(const LP_Objectw &o)
+void LP_GLSelector::_appendObject(const LP_Objectw &o)
 {
     QWriteLocker locker(&mLock);
     mSelectedObjs.insert(o);
 }
 
-void LP_GLSelector::removeObject(const LP_Objectw &o)
+void LP_GLSelector::_removeObject(const LP_Objectw &o)
 {
     QWriteLocker locker(&mLock);
     mSelectedObjs.remove(o);
 }
 
-void LP_GLSelector::clear()
+void LP_GLSelector::_clear()
 {
     QWriteLocker locker(&mLock);
     mSelectedObjs.clear();

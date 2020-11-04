@@ -234,7 +234,6 @@ void LP_MainWindow::loadSelector()
         return;
     }
     connect(pSelector, &QItemSelectionModel::selectionChanged,
-            this,
             [this](const QItemSelection &selected, const QItemSelection &deselected){
         //qDebug() << selected << " " << deselected;
         auto pM = qobject_cast<QStandardItemModel*>(ui->treeView->model());
@@ -247,7 +246,7 @@ void LP_MainWindow::loadSelector()
                 continue;   //TODO add control for items
             }
             LP_Objectw w_o = o->data().value<LP_Object>();
-            g_GLSelector->appendObject(w_o);
+            g_GLSelector->_appendObject(w_o);
         }
         for ( auto &i : deselected.indexes()){
             auto o = pM->itemFromIndex(i);
@@ -255,17 +254,16 @@ void LP_MainWindow::loadSelector()
                 continue;   //TODO add control for items
             }
             LP_Objectw w_o = o->data().value<LP_Object>();
-            g_GLSelector->removeObject(w_o);
+            g_GLSelector->_removeObject(w_o);
         }
         ui->openGLWidget->Renderer()->UpdateGL();
-    }, Qt::QueuedConnection);
+    });
     connect(g_GLSelector.get(),
             &LP_GLSelector::ClearSelected,
             ui->treeView->selectionModel(),
             &QItemSelectionModel::clearSelection);
     connect(g_GLSelector.get(),
             &LP_GLSelector::Selected,
-            this,
             [this](const QUuid &id){
         auto pM = ui->treeView->model();
         auto ids = pM->match(pM->index(0, 0),
@@ -274,7 +272,7 @@ void LP_MainWindow::loadSelector()
         for ( auto &id : ids ){
             ui->treeView->selectionModel()->select(id, QItemSelectionModel::Rows | QItemSelectionModel::Select);
         }
-    }, Qt::QueuedConnection);
+    });
 }
 
 void LP_MainWindow::loadPlugins(const QString &path, QMenuBar *menubar)
