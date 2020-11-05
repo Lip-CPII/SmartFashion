@@ -30,7 +30,7 @@ class FUNCTIONAL_EXPORT LP_GLSelector : public QObject
 public:
 
     Q_INVOKABLE
-    LP_Objectw SelectInWorld(const QString &renderername, const QPoint &pos, int w=7, int h=7);
+    std::vector<LP_Objectw> SelectInWorld(const QString &renderername, const QPoint &pos, int w=7, int h=7);
 
 
     void SelectCustom(const QString &renderername, void *cb, void *data=nullptr);
@@ -68,7 +68,7 @@ public:
     Q_INVOKABLE
     void DestroyGL(QOpenGLContext *ctx, QSurface *surf);
 signals:
-    void Selected(QUuid);
+    void Selected(std::vector<QUuid>,std::vector<QUuid>);
     void ClearSelected();
 
 private:

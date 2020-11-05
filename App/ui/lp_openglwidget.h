@@ -41,6 +41,7 @@ private:
     QOpenGLTextureBlitter *mBlitter;
     LP_GLRenderer *mRenderer;
     QImage mTexture;
+    int mDownKey = 0;
     float mCursorPos[2];
     struct member;
     member *m;

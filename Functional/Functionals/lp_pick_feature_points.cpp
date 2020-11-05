@@ -70,13 +70,15 @@ bool LP_Pick_Feature_Points::eventFilter(QObject *watched, QEvent *event)
 
         if ( e->button() == Qt::LeftButton ){
             if (!mObject.lock()){
-                 auto pObj = g_GLSelector->SelectInWorld("Shade",e->pos());
-                auto c = _isMesh(pObj);
-                if ( c.lock()){
-                    mObject = pObj;
-                    mLabel->setText(mObject.lock()->Uuid().toString());
+                auto &&objs = g_GLSelector->SelectInWorld("Shade",e->pos());
+                for ( auto &o : objs ){
+                    auto c = _isMesh(o);
+                    if ( c.lock()){
+                        mObject = o;
+                        mLabel->setText(mObject.lock()->Uuid().toString());
 
-                    return true;    //Since event filter has been called
+                        return true;    //Since event filter has been called
+                    }
                 }
             }else{
                 //Select the entity vertices

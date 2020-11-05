@@ -7,6 +7,7 @@
 #include <QUuid>
 #include <QVariant>
 #include <QReadWriteLock>
+#include <QDebug>
 
 class QOpenGLContext;
 class QOpenGLFramebufferObject;
@@ -68,6 +69,7 @@ public:
 
     virtual QByteArray TypeName() const {return "Base";}
 
+
 protected:
     explicit LP_ObjectImpl(LP_Objectw parent = LP_Objectw());
 
@@ -89,6 +91,17 @@ inline uint qHash(const LP_Objectw &c){
         return (qHash(c.lock()->Uuid()));
     }
 
+inline QDebug operator<<(QDebug debug, const LP_Objectw& o){
+        QDebugStateSaver saver(debug);
+        auto _o = o.lock();
+        if ( _o ){
+            debug.nospace() << _o->TypeName() << "-(" << _o->Uuid() << ')';
+        }else{
+            debug.quote() << "Null LP_Object";
+        }
+
+        return debug;
+    }
 Q_DECLARE_METATYPE(LP_Object)
 
 #endif // LP_OBJECT_H

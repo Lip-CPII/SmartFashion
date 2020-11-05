@@ -180,9 +180,13 @@ void LP_OpenGLWidget::mouseReleaseEvent(QMouseEvent *event)
     if ( Qt::LeftButton == event->button()){
         QString renderer = objectName() == "openGLWidget" ? "Shade" : "Normal";//TODO non-fixed
 
-        emit g_GLSelector->ClearSelected();
+        qDebug() << event->modifiers();
+        if (!(( Qt::ControlModifier | Qt::ShiftModifier)
+                & event->modifiers())){
+            emit g_GLSelector->ClearSelected();
+        }
         //Perform selection
-        LP_Objectw o = g_GLSelector->SelectInWorld(renderer, event->pos());
+        auto objs = g_GLSelector->SelectInWorld(renderer, event->pos());
 
 //        QMetaObject::invokeMethod(g_GLSelector.get(),
 //                                  "SelectInWorld",
@@ -191,10 +195,25 @@ void LP_OpenGLWidget::mouseReleaseEvent(QMouseEvent *event)
 //                                  Q_ARG(QString, renderer),
 //                                  Q_ARG(QPoint, event->pos()));
 
-        if ( o.lock()){
-            emit g_GLSelector->Selected(o.lock()->Uuid());
+        if ( !objs.empty()){
+            std::vector<QUuid> select, deselect;
+
+            if ( Qt::ShiftModifier & event->modifiers()){
+                deselect.resize(objs.size());
+                std::transform(objs.cbegin(), objs.cend(), deselect.begin(), [](const LP_Objectw &o){
+                    return o.lock()->Uuid();
+                });
+            }else {
+                select.resize(objs.size());
+                std::transform(objs.cbegin(), objs.cend(), select.begin(), [](const LP_Objectw &o){
+                    return o.lock()->Uuid();
+                });
+            }
+
+            emit g_GLSelector->Selected(select, deselect);
+
+            mRenderer->UpdateGL();
         }
-        mRenderer->UpdateGL();
 
         event->accept();
     }
@@ -416,6 +435,10 @@ void LP_OpenGLWidget::keyPressEvent(QKeyEvent *e)
         break;
     }
     lock.unlock();
+    if (e->isAccepted()){
+        return;
+    }
+    QOpenGLWidget::keyPressEvent(e);
 }
 
 void LP_OpenGLWidget::keyReleaseEvent(QKeyEvent *event)

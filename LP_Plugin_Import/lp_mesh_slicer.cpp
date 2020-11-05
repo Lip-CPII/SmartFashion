@@ -119,31 +119,34 @@ bool LP_Mesh_Slicer::eventFilter(QObject *watched, QEvent *event)
 
         if ( e->button() == Qt::LeftButton ){
             if (!mObject.lock()){
-                auto pObj = g_GLSelector->SelectInWorld("Shade",e->pos());
-                auto c_ = _isMesh(pObj);
-                if ( auto c = c_.lock()){
-                    QVector3D minB, maxB;
-                    c->BoundingBox(minB, maxB);
+                auto &&objs = g_GLSelector->SelectInWorld("Shade",e->pos());
+                for ( auto &o : objs ){
+                    auto c_ = _isMesh(o);
+                    if ( auto c = c_.lock()){
+                        QVector3D minB, maxB;
+                        c->BoundingBox(minB, maxB);
 
-                    mRange[0] = minB.y();
-                    mRange[1] = maxB.y();
+                        mRange[0] = minB.y();
+                        mRange[1] = maxB.y();
 
-                    mObject = pObj;
-                    mLabel->setText(mObject.lock()->Uuid().toString());
+                        mObject = o;
+                        mLabel->setText(mObject.lock()->Uuid().toString());
 
-                    auto m = c->Mesh();
-                    vertices.resize(m->n_vertices());
-                    memcpy(vertices.data(), m->points(), m->n_vertices() * sizeof(OpMesh::Point));
-                    faces.resize(m->n_faces());
-                    auto it = faces.begin();
+                        auto m = c->Mesh();
+                        vertices.resize(m->n_vertices());
+                        memcpy(vertices.data(), m->points(), m->n_vertices() * sizeof(OpMesh::Point));
+                        faces.resize(m->n_faces());
+                        auto it = faces.begin();
 
-                    for ( auto &f : m->faces()){
-                        Intersector::Face tmpF;
-                        auto it_ = tmpF.begin();
-                        for ( const auto &vx : f.vertices()){
-                            *it_++ = vx.idx();
+                        for ( auto &f : m->faces()){
+                            Intersector::Face tmpF;
+                            auto it_ = tmpF.begin();
+                            for ( const auto &vx : f.vertices()){
+                                *it_++ = vx.idx();
+                            }
+                            *it++ = std::move(tmpF);
                         }
-                        *it++ = std::move(tmpF);
+                        break;
                     }
                 }
             }

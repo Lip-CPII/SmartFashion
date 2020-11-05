@@ -245,32 +245,22 @@ void LP_MainWindow::loadSelector()
         if ( !pM ){
             return;
         }
-        for ( auto &i : selected.indexes()){
-            auto o = pM->itemFromIndex(i);
-            switch (i.column()) {
-            case 0:
-            {
-                LP_Objectw w_o = o->data().value<LP_Object>();
-                g_GLSelector->_appendObject(w_o);
-            }
-                break;
-            case 1:
-            {
 
+        std::function<void(const QItemSelection&,bool)> _func =
+                [&pM](const QItemSelection &list, bool append=!0){
+            auto f = append ? &LP_GLSelector::_appendObject : &LP_GLSelector::_removeObject;
+            for ( auto &i : list.indexes()){
+                if ( 0 != i.column()){
+                    continue;   //TODO add control for items
+                }
+                auto o = pM->itemFromIndex(i);
+                LP_Objectw w_o = o->data().value<LP_Object>();
+                (g_GLSelector.get()->*f)(w_o);
             }
-                break;
-            default:
-                break;
-            }
-        }
-        for ( auto &i : deselected.indexes()){
-            auto o = pM->itemFromIndex(i);
-            if ( 0 != i.column()){
-                continue;   //TODO add control for items
-            }
-            LP_Objectw w_o = o->data().value<LP_Object>();
-            g_GLSelector->_removeObject(w_o);
-        }
+        };
+        _func(selected, !0);
+        _func(deselected, 0);
+
         ui->openGLWidget->Renderer()->UpdateGL();
     });
     connect(g_GLSelector.get(),
@@ -279,14 +269,24 @@ void LP_MainWindow::loadSelector()
             &QItemSelectionModel::clearSelection);
     connect(g_GLSelector.get(),
             &LP_GLSelector::Selected,
-            [this](const QUuid &id){
-        auto pM = ui->treeView->model();
-        auto ids = pM->match(pM->index(0, 0),
-                             Qt::UserRole + 2,
-                             id, 1, Qt::MatchRecursive | Qt::MatchExactly);
-        for ( auto &id : ids ){
-            ui->treeView->selectionModel()->select(id, QItemSelectionModel::Rows | QItemSelectionModel::Select);
-        }
+            [this](const std::vector<QUuid> &selected, const std::vector<QUuid> &deselected){
+
+        std::function<void(const std::vector<QUuid>&,QItemSelectionModel::SelectionFlags)> _func =
+                [this](const std::vector<QUuid> &list, QItemSelectionModel::SelectionFlags flags){
+            for ( auto &id : list ){
+                auto pM = ui->treeView->model();
+                auto _ids = pM->match(pM->index(0, 0),
+                                     Qt::UserRole + 2,
+                                     id, 1, Qt::MatchRecursive | Qt::MatchExactly);
+                assert( _ids.size() < 2 );
+                for ( auto &_id : _ids ){
+                    ui->treeView->selectionModel()->select(_id, flags);
+                }
+            }
+        };
+
+        _func( selected, QItemSelectionModel::Rows | QItemSelectionModel::Select);
+        _func( deselected, QItemSelectionModel::Rows | QItemSelectionModel::Deselect);
     });
     connect(ui->treeView,
             &QTreeView::clicked,

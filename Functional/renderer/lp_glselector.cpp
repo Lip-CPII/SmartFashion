@@ -139,12 +139,12 @@ void LP_GLSelector::DestroyGL(QOpenGLContext *ctx, QSurface *surf)
     ctx->doneCurrent();
 }
 
-LP_Objectw LP_GLSelector::SelectInWorld(const QString &renderername, const QPoint &pos, int w, int h)
+std::vector<LP_Objectw> LP_GLSelector::SelectInWorld(const QString &renderername, const QPoint &pos, int w, int h)
 {
     auto v_ = g_Renderers.find(renderername);
     if ( g_Renderers.cend() == v_ ){
         qDebug() << "Unknown renderer : " << renderername;
-        return LP_Objectw();
+        return {};
     }
 
     auto pDoc = &LP_Document::gDoc;
@@ -277,18 +277,19 @@ LP_Objectw LP_GLSelector::SelectInWorld(const QString &renderername, const QPoin
                               Q_ARG(LP_GLRendererCB,cb));
 
     if ( selections.empty()){
-        return LP_Objectw();
+        return {};
     }
-    std::vector<QUuid> l;
+
+    std::vector<LP_Objectw> l;
     const size_t nO = pDoc->Objects().size();
     auto it = pDoc->Objects().begin();
     for ( auto &i : selections ){
         assert(i<nO);
-        l.emplace_back((*std::next(it,i)).lock()->Uuid());
+        l.emplace_back(pDoc->FindObject((*std::next(it,i)).lock()->Uuid()));
     }
     assert(!l.empty());
     qDebug() << selections << l;
-    return pDoc->FindObject(l.front());
+    return l;
 }
 
 void LP_GLSelector::SelectCustom(const QString &renderername, void *cb, void *data)
