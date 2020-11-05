@@ -92,6 +92,7 @@ QWidget *LP_Draw_Dots::DockUi()
 
 bool LP_Draw_Dots::Run()
 {
+    emit glUpdateRequest();
     return false;
 }
 
@@ -134,7 +135,7 @@ void LP_Draw_Dots::FunctionalRender(QOpenGLContext *ctx, QSurface *surf, QOpenGL
 
     f->glEnable(GL_DEPTH_TEST);             //Enable depth test
 
-
+    fbo->bind();
     mProgram->bind();                       //Bind the member shader to the context
 
     QOpenGLTexture tex_(mImage);
@@ -199,7 +200,7 @@ void LP_Draw_Dots::FunctionalRender(QOpenGLContext *ctx, QSurface *surf, QOpenGL
     mProgram->disableAttributeArray("a_pos"); //Disable the "a_pos" buffer
 
     mProgram->release();                        //Release the shader from the context
-
+    fbo->release();
     f->glDisable(GL_DEPTH_TEST);
 }
 
@@ -285,7 +286,6 @@ void LP_Draw_Dots::initializeGL()
 
     mInitialized = true;
 }
-
 
 bool LP_Draw_Dots::eventFilter(QObject *watched, QEvent *event)
 {

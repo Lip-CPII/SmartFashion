@@ -77,6 +77,7 @@ bool LP_Pick_Feature_Points::eventFilter(QObject *watched, QEvent *event)
                         mObject = o;
                         mLabel->setText(mObject.lock()->Uuid().toString());
 
+                        emit glUpdateRequest();
                         return true;    //Since event filter has been called
                     }
                 }
@@ -108,6 +109,8 @@ bool LP_Pick_Feature_Points::eventFilter(QObject *watched, QEvent *event)
             mObject.reset();
             mLabel->setText("Select A Mesh");
             mPoints.clear();
+            emit glUpdateRequest();
+            return true;
 //            QStringList list;
 //            mFeaturePoints.setStringList(list);
         }
@@ -119,7 +122,6 @@ bool LP_Pick_Feature_Points::eventFilter(QObject *watched, QEvent *event)
 
 void LP_Pick_Feature_Points::FunctionalRender(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebufferObject *fbo, const LP_RendererCam &cam, const QVariant &options)
 {
-    Q_UNUSED(fbo)   //Mostly not modified within a Functional.
     Q_UNUSED(surf)  //Mostly not used within a Functional.
     Q_UNUSED(options)   //Not used in this functional.
 
@@ -135,6 +137,7 @@ void LP_Pick_Feature_Points::FunctionalRender(QOpenGLContext *ctx, QSurface *sur
 
     auto f = ctx->extraFunctions();         //Get the OpenGL functions container
 
+    fbo->bind();
     f->glEnable(GL_PROGRAM_POINT_SIZE);     //Enable point-size controlled by shader
     f->glEnable(GL_DEPTH_TEST);             //Enable depth test
 
@@ -161,6 +164,7 @@ void LP_Pick_Feature_Points::FunctionalRender(QOpenGLContext *ctx, QSurface *sur
 
     mProgram->release();                        //Release the shader from the context
 
+    fbo->release();
     f->glDisable(GL_PROGRAM_POINT_SIZE);
     f->glDisable(GL_DEPTH_TEST);
 }

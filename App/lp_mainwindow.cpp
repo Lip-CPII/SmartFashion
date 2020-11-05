@@ -18,6 +18,7 @@
 #include <QDir>
 #include <QPluginLoader>
 #include <QProgressBar>
+#include <QKeyEvent>
 
 
 LP_MainWindow::LP_MainWindow(QWidget *parent)
@@ -413,4 +414,13 @@ void LP_MainWindow::closeEvent(QCloseEvent *event)
     }
 
     QMainWindow::closeEvent(event);
+}
+
+void LP_MainWindow::keyPressEvent(QKeyEvent *event)
+{
+    if ( Qt::Key_Escape == event->key()){
+        LP_Functional::ClearCurrent();
+        ui->tabWidget->setCurrentIndex(0);
+        ui->openGLWidget->Renderer()->UpdateGL();
+    }
 }

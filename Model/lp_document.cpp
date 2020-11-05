@@ -103,6 +103,11 @@ const QSet<LP_Objectw>& LP_Document::Objects() const
     return mObjects;
 }
 
+const QSet<LP_Objectw> &LP_Document::Hiddens() const
+{
+    return mHiddens;
+}
+
 void LP_Document::ResetDocument()
 {
     for ( auto o : mObjects ){

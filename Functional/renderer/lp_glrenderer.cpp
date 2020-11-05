@@ -200,7 +200,11 @@ void LP_GLRenderer::updateTarget()
     auto &dLock = pDoc->Lock();
     dLock.lockForRead();
 
-    for ( auto &o : pDoc->Objects()){
+    auto targets = &g_GLSelector->Objects();
+    if ( targets->empty()){
+        targets = &pDoc->Objects();
+    }
+    for ( auto &o : *targets){
         LP_Geometryw geo = std::static_pointer_cast<LP_GeometryImpl>(o.lock());
         if ( auto g = geo.lock()){
             QVector3D bmin, bmax;

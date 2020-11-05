@@ -247,7 +247,6 @@ void LP_YOLO_Helper::FunctionalRender(QOpenGLContext *ctx, QSurface *surf, QOpen
 {
     Q_UNUSED(surf)  //Mostly not used within a Functional.
     Q_UNUSED(options)   //Not used in this functional.
-    Q_UNUSED(fbo);
 
     if ( mImage.isNull()){
         return;
@@ -279,6 +278,7 @@ void LP_YOLO_Helper::FunctionalRender(QOpenGLContext *ctx, QSurface *surf, QOpen
 
     f->glEnable(GL_DEPTH_TEST);             //Enable depth test
 
+    fbo->bind();
     mProgram->bind();                       //Bind the member shader to the context
 
     mLock.lockForRead();
@@ -395,6 +395,7 @@ void LP_YOLO_Helper::FunctionalRender(QOpenGLContext *ctx, QSurface *surf, QOpen
     f->glDisable(GL_BLEND);
 
     mProgram->release();
+    fbo->release();
 }
 
 void LP_YOLO_Helper::exportYOLOset()

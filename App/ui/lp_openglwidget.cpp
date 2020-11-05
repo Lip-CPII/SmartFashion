@@ -339,9 +339,9 @@ void LP_OpenGLWidget::keyPressEvent(QKeyEvent *e)
     case Qt::Key_0:
         if (Qt::KeypadModifier == e->modifiers()){
             //TODO: Revise this ugly design
-//            QMetaObject::invokeMethod(mRenderer,
-//                                      &LP_GLRenderer::updateTarget,
-//                                      Qt::BlockingQueuedConnection);
+            QMetaObject::invokeMethod(mRenderer,
+                                      &LP_GLRenderer::updateTarget,
+                                      Qt::BlockingQueuedConnection);
             m->resetView( mRenderer->mCam );
             QMetaObject::invokeMethod(mRenderer,
                                       "updateGL",Qt::QueuedConnection);

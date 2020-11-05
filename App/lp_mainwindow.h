@@ -28,7 +28,7 @@ protected:
 
     // QWidget interface
     void closeEvent(QCloseEvent *event) override;
-
+    void keyPressEvent(QKeyEvent *event) override;
 private:
     Ui::LP_MainWindow *ui;
     std::unique_ptr<QPluginLoader> mPluginLoader;
