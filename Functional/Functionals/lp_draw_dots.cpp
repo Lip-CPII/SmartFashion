@@ -246,7 +246,7 @@ void LP_Draw_Dots::initializeGL()
                                       QVector2D(0.0f, 1.0f),
                                       QVector2D(0.0f, 0.0f)};
 
-    const int nVs = pos.size();
+    const size_t nVs = pos.size();
 
     QOpenGLBuffer *posBuf = new QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
     posBuf->setUsagePattern(QOpenGLBuffer::StreamDraw);
@@ -257,7 +257,7 @@ void LP_Draw_Dots::initializeGL()
     auto ptr = static_cast<float*>(posBuf->map(QOpenGLBuffer::WriteOnly));
     auto pptr = pos.begin();
     auto tptr = texCoord.begin();
-    for ( int i=0; i<nVs; ++i, ++pptr, ++tptr ){
+    for ( size_t i=0; i<nVs; ++i, ++pptr, ++tptr ){
         memcpy(ptr, &(*pptr)[0], sizeof(QVector3D));
         memcpy(ptr+3, &(*tptr)[0], sizeof(QVector2D));
         ptr = std::next(ptr, 5);

@@ -180,7 +180,6 @@ void LP_OpenGLWidget::mouseReleaseEvent(QMouseEvent *event)
     if ( Qt::LeftButton == event->button()){
         QString renderer = objectName() == "openGLWidget" ? "Shade" : "Normal";//TODO non-fixed
 
-        qDebug() << event->modifiers();
         if (!(( Qt::ControlModifier | Qt::ShiftModifier)
                 & event->modifiers())){
             emit g_GLSelector->ClearSelected();

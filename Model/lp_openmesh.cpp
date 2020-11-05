@@ -31,6 +31,15 @@ void LP_OpenMeshImpl::SetMesh(const MyMesh &mesh)
     mMesh = mesh;
 }
 
+void LP_OpenMeshImpl::_Dump(QDebug &debug)
+{
+    LP_GeometryImpl::_Dump(debug);
+    debug.nospace() << "#V : " << mMesh->n_vertices() << ", "
+                    << "#E : " << mMesh->n_edges() << ", "
+                    << "#F : " << mMesh->n_faces()
+                    << "\n";
+}
+
 void LP_OpenMeshImpl::Draw(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebufferObject *fbo, const LP_RendererCam &cam, QVariant &option)
 {
     Q_UNUSED(surf)

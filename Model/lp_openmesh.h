@@ -7,6 +7,7 @@
 #include <OpenMesh/Core/Mesh/TriMesh_ArrayKernelT.hh>
 #include <OpenMesh/Core/Mesh/Attributes.hh>
 #include <QOpenGLBuffer>
+#include <QDebug>
 
 struct MeshTraits : public OpenMesh::DefaultTraits
 {
@@ -45,6 +46,8 @@ public:
     MyMesh Mesh() const;
     void SetMesh(const MyMesh &mesh);
 
+    void _Dump(QDebug &debug) override;
+
 protected:
     explicit LP_OpenMeshImpl(LP_Object parent = nullptr);
 
@@ -59,5 +62,6 @@ private:
 
     size_t mStrides[2];
 };
+
 
 #endif // LP_OPENMESH_H

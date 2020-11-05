@@ -21,6 +21,12 @@ public:
     virtual void SetBoundingBox(const QVector3D &min, const QVector3D &max);
 
     virtual ~LP_GeometryImpl();
+
+    void _Dump(QDebug &debug) override {
+        LP_ObjectImpl::_Dump(debug);
+        debug.nospace() << "Geometry : Bounding Box (" << mBBmin << ", " << mBBmax << ")"
+                        << "\n";
+    }
 protected:
     explicit LP_GeometryImpl(LP_Object parent = nullptr);
 

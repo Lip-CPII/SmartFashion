@@ -21,6 +21,7 @@ typedef std::weak_ptr<LP_ObjectImpl> LP_Objectw;
 #define REGISTER_OBJECT(n) \
     private: \
     inline static QByteArray mTypeName = #n; \
+    public: \
     QByteArray TypeName() const override {return mTypeName;}\
 
 class LP_RendererCamImpl;
@@ -69,9 +70,13 @@ public:
 
     virtual QByteArray TypeName() const {return "Base";}
 
-
+    virtual void _Dump(QDebug &debug){
+        debug.nospace() << TypeName() << "-" << Uuid() << "\n";
+    }
 protected:
     explicit LP_ObjectImpl(LP_Objectw parent = LP_Objectw());
+
+
 
     LP_Objectw mParent;
     QSet<LP_Objectw> mChildren;
@@ -95,7 +100,7 @@ inline QDebug operator<<(QDebug debug, const LP_Objectw& o){
         QDebugStateSaver saver(debug);
         auto _o = o.lock();
         if ( _o ){
-            debug.nospace() << _o->TypeName() << "-(" << _o->Uuid() << ')';
+            _o->_Dump(debug);
         }else{
             debug.quote() << "Null LP_Object";
         }
