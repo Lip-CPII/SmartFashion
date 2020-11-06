@@ -139,6 +139,24 @@ void LP_GLSelector::DestroyGL(QOpenGLContext *ctx, QSurface *surf)
     ctx->doneCurrent();
 }
 
+void LP_GLSelector::Clip(float &sx, float &sy, int &w, int &h, int maxx, int maxy, int minx, int miny)
+{
+    if ( sx < minx ){
+        w += sx;
+        sx = minx;
+    }
+    if ( sy < miny ){
+        h += sy;
+        sy = miny;
+    }
+    if ( sx + w >= maxx ){
+        w = maxx - 1 - sx;
+    }
+    if ( sy + h >= maxy ){
+        h = maxy - 1 - sy;
+    }
+}
+
 std::vector<LP_Objectw> LP_GLSelector::SelectInWorld(const QString &renderername, const QPoint &pos, int w, int h)
 {
     auto v_ = g_Renderers.find(renderername);
@@ -158,20 +176,8 @@ std::vector<LP_Objectw> LP_GLSelector::SelectInWorld(const QString &renderername
 
         float org[2] = {center.x() - 0.5f*xspan, h - center.y() - 0.5f * yspan};
         int sw(xspan), sh(yspan);
-        if ( org[0] < 0.0f ){
-            sw += org[0];
-            org[0] = 0.0f;
-        }
-        if ( org[1] < 0.0f ){
-            sh += org[1];
-            org[1] = 0.0f;
-        }
-        if ( org[0] + sw >= w ){
-            sw = w - 1 - int(org[0]);
-        }
-        if ( org[1] + sh >= h ){
-            sh = h - 1 - int(org[1]);
-        }
+
+        LP_GLSelector::Clip(org[0], org[1], sw, sh, w, h);
 
         if ( 0 >= sw || 0 >= sh ){
             return;
@@ -343,6 +349,17 @@ std::vector<uint> LP_GLSelector::SelectPoints3D(const QString &renderername, con
 
         auto w = cam->ResolutionX(),
              h = cam->ResolutionY();
+
+        int   sw(xspan),
+              sh(yspan);
+        float org[2] = {center.x() - 0.5f*sw, h - center.y() - 0.5f * sh};
+
+        LP_GLSelector::Clip(org[0], org[1], sw, sh, w, h);
+
+        if ( 0 >= sw || 0 >= sh ){
+            return;
+        }
+
         auto f = ctx->extraFunctions();
         ctx->makeCurrent(surf);
 
@@ -366,9 +383,7 @@ std::vector<uint> LP_GLSelector::SelectPoints3D(const QString &renderername, con
                 "   gl_FragColor = vec4(color, 1.0);\n"
                 "}";
 
-        const uint  &sw(xspan),
-                    &sh(yspan);
-        const float org[2] = {center.x() - 0.5f*sw, h - center.y() - 0.5f * sh};
+
 
         constexpr uint _start = 0;    //This must be smaller than 2^24 - pos.size()
 
@@ -437,8 +452,8 @@ std::vector<uint> LP_GLSelector::SelectPoints3D(const QString &renderername, con
         unsigned char* c(nullptr);
         constexpr uint  bb   = 256*256;
         // Convert the color back to an integer ID
-        for ( uint i=0; i<sw; ++i ){
-            for( uint j=0; j<sh; ++j ){
+        for ( int i=0; i<sw; ++i ){
+            for( int j=0; j<sh; ++j ){
                 const uint index = i*sh + j;
                 c   = &color[index*nChn];
                 if ( c[3] == 255 ){
@@ -490,6 +505,17 @@ std::vector<uint> LP_GLSelector::SelectPoints3D(const QString &renderername, con
 
         auto w = cam->ResolutionX(),
              h = cam->ResolutionY();
+
+        int   sw(xspan),
+              sh(yspan);
+        float org[2] = {center.x() - 0.5f*sw, h - center.y() - 0.5f * sh};
+
+        LP_GLSelector::Clip(org[0], org[1], sw, sh, w, h);
+
+        if ( 0 >= sw || 0 >= sh ){
+            return;
+        }
+
         auto f = ctx->extraFunctions();
         ctx->makeCurrent(surf);
 
@@ -512,10 +538,6 @@ std::vector<uint> LP_GLSelector::SelectPoints3D(const QString &renderername, con
                 "void main(){\n"
                 "   gl_FragColor = vec4(color, 1.0);\n"
                 "}";
-
-        const uint  &sw(xspan),
-                    &sh(yspan);
-        const float org[2] = {center.x() - 0.5f*sw, h - center.y() - 0.5f * sh};
 
         constexpr uint _start = 0;    //This must be smaller than 2^24 - pos.size()
 
@@ -584,8 +606,8 @@ std::vector<uint> LP_GLSelector::SelectPoints3D(const QString &renderername, con
         unsigned char* c(nullptr);
         constexpr uint  bb   = 256*256;
         // Convert the color back to an integer ID
-        for ( uint i=0; i<sw; ++i ){
-            for( uint j=0; j<sh; ++j ){
+        for ( int i=0; i<sw; ++i ){
+            for( int j=0; j<sh; ++j ){
                 const uint index = i*sh + j;
                 c   = &color[index*nChn];
                 if ( c[3] == 255 ){

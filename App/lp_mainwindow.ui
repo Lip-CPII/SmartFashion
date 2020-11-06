@@ -47,12 +47,9 @@ QToolTip {
        <enum>Qt::Horizontal</enum>
       </property>
       <widget class="QFrame" name="frame">
-       <property name="focusPolicy">
-        <enum>Qt::NoFocus</enum>
-       </property>
        <property name="styleSheet">
         <string notr="true">QFrame:focus{
-	border:1px solid red;
+	border:1px solid gold;
 }</string>
        </property>
        <property name="frameShape">
@@ -86,7 +83,7 @@ QToolTip {
       <widget class="QFrame" name="frame_2">
        <property name="styleSheet">
         <string notr="true">QFrame:focus{
-	border:1px solid red;
+	border:1px solid gold;
 }</string>
        </property>
        <property name="frameShape">

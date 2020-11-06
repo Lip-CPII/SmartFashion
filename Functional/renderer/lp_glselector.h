@@ -32,7 +32,6 @@ public:
     Q_INVOKABLE
     std::vector<LP_Objectw> SelectInWorld(const QString &renderername, const QPoint &pos, int w=7, int h=7);
 
-
     void SelectCustom(const QString &renderername, void *cb, void *data=nullptr);
     std::vector<uint> SelectPoints3D(const QString &renderername, const std::vector<float[3]> &pts, const QPoint &pos, bool mask=false, int w=7, int h=7);
         std::vector<uint> SelectPoints3D(const QString &renderername, const float *pts, const size_t &npts, const QPoint &pos, bool mask=false, int w=7, int h=7);
@@ -71,6 +70,9 @@ signals:
     void Selected(std::vector<QUuid>,std::vector<QUuid>);
     void ClearSelected();
 
+protected:
+    static void Clip(float &sx, float &sy, int &w, int &h,
+            int maxx = 100, int maxy = 100, int minx = 0, int miny = 0);
 private:
     QSet<LP_Objectw> mSelectedObjs;
     QOpenGLShaderProgram *mProgram = nullptr;
