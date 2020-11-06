@@ -59,7 +59,6 @@ void LP_MainWindow::loadProgressWidget()
     connect(ui->progressBar, &QProgressBar::valueChanged,
             [this](const int &v){
 
-        qDebug() << v << "/" << ui->progressBar->maximum();
         if ( v >= ui->progressBar->maximum()){
             ui->progressBar->setRange(0,LP_ProgressBar::gStep);
             ui->progressBar->setValue(LP_ProgressBar::gStep);
@@ -413,8 +412,6 @@ void LP_MainWindow::loadPlugins(const QString &path, QMenuBar *menubar)
 //    };
 //    enumerateChildren(ui->menubar,"");
 }
-
-
 
 void LP_MainWindow::closeEvent(QCloseEvent *event)
 {

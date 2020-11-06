@@ -47,13 +47,21 @@ QToolTip {
        <enum>Qt::Horizontal</enum>
       </property>
       <widget class="QFrame" name="frame">
+       <property name="focusPolicy">
+        <enum>Qt::NoFocus</enum>
+       </property>
+       <property name="styleSheet">
+        <string notr="true">QFrame:focus{
+	border:1px solid red;
+}</string>
+       </property>
        <property name="frameShape">
         <enum>QFrame::StyledPanel</enum>
        </property>
        <property name="frameShadow">
         <enum>QFrame::Raised</enum>
        </property>
-       <layout class="QVBoxLayout" name="verticalLayout">
+       <layout class="QGridLayout" name="gridLayout_5">
         <property name="leftMargin">
          <number>0</number>
         </property>
@@ -66,7 +74,7 @@ QToolTip {
         <property name="bottomMargin">
          <number>0</number>
         </property>
-        <item>
+        <item row="0" column="0">
          <widget class="LP_OpenGLWidget" name="openGLWidget">
           <property name="focusPolicy">
            <enum>Qt::ClickFocus</enum>
@@ -76,13 +84,18 @@ QToolTip {
        </layout>
       </widget>
       <widget class="QFrame" name="frame_2">
+       <property name="styleSheet">
+        <string notr="true">QFrame:focus{
+	border:1px solid red;
+}</string>
+       </property>
        <property name="frameShape">
         <enum>QFrame::StyledPanel</enum>
        </property>
        <property name="frameShadow">
         <enum>QFrame::Raised</enum>
        </property>
-       <layout class="QVBoxLayout" name="verticalLayout_2">
+       <layout class="QGridLayout" name="gridLayout_6">
         <property name="leftMargin">
          <number>0</number>
         </property>
@@ -95,10 +108,13 @@ QToolTip {
         <property name="bottomMargin">
          <number>0</number>
         </property>
-        <item>
+        <item row="0" column="0">
          <widget class="LP_OpenGLWidget" name="openGLWidget_2">
           <property name="focusPolicy">
            <enum>Qt::ClickFocus</enum>
+          </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Control:&lt;/p&gt;&lt;p&gt;Zoom in/out : Wheel&lt;/p&gt;&lt;p&gt;Rotate : Mid/Right button&lt;/p&gt;&lt;p&gt;Pan: Crtl + Mid/Right button&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;View:&lt;/p&gt;&lt;p&gt;Numpad 0 : Reset View&lt;/p&gt;&lt;p&gt;4, 6 : Rotate Y-Axis&lt;/p&gt;&lt;p&gt;2, 8 : Rotate X-Axis&lt;/p&gt;&lt;p&gt;5 : Orth/Perspective&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
          </widget>
         </item>
@@ -114,7 +130,7 @@ QToolTip {
      <x>0</x>
      <y>0</y>
      <width>1280</width>
-     <height>39</height>
+     <height>37</height>
     </rect>
    </property>
    <property name="styleSheet">
@@ -380,7 +396,7 @@ QUndoView::item:hover {
               <x>0</x>
               <y>0</y>
               <width>258</width>
-              <height>584</height>
+              <height>589</height>
              </rect>
             </property>
             <layout class="QGridLayout" name="gridLayout_3"/>

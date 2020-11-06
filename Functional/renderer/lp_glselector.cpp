@@ -155,6 +155,27 @@ std::vector<LP_Objectw> LP_GLSelector::SelectInWorld(const QString &renderername
         Q_UNUSED(_fbo)
         auto w = cam->ResolutionX(),
              h = cam->ResolutionY();
+
+        float org[2] = {center.x() - 0.5f*xspan, h - center.y() - 0.5f * yspan};
+        int sw(xspan), sh(yspan);
+        if ( org[0] < 0.0f ){
+            sw += org[0];
+            org[0] = 0.0f;
+        }
+        if ( org[1] < 0.0f ){
+            sh += org[1];
+            org[1] = 0.0f;
+        }
+        if ( org[0] + sw >= w ){
+            sw = w - 1 - int(org[0]);
+        }
+        if ( org[1] + sh >= h ){
+            sh = h - 1 - int(org[1]);
+        }
+
+        if ( 0 >= sw || 0 >= sh ){
+            return;
+        }
         auto f = ctx->extraFunctions();
         ctx->makeCurrent(surf);
 
@@ -173,8 +194,7 @@ std::vector<LP_Objectw> LP_GLSelector::SelectInWorld(const QString &renderername
                 "   gl_FragColor = v4_color;\n"
                 "}";
 
-        uint sw(xspan), sh(yspan);
-        float org[2] = {center.x() - 0.5f*sw, h - center.y() - 0.5f * sh};
+
 
         auto prog = new QOpenGLShaderProgram;
         prog->addShaderFromSourceCode(QOpenGLShader::Vertex,vsh.c_str());
@@ -238,8 +258,8 @@ std::vector<LP_Objectw> LP_GLSelector::SelectInWorld(const QString &renderername
         constexpr uint bb   = 256*256,
                        aa   = bb*256;
         // Convert the color back to an integer ID
-        for ( uint i=0; i<sw; ++i ){
-            for( uint j=0; j<sh; ++j ){
+        for ( int i=0; i<sw; ++i ){
+            for( int j=0; j<sh; ++j ){
                 const int index = i*sh + j;
                 c   = &color[index*nChn];
                 if ( c[0] > 0 ){

@@ -172,6 +172,7 @@ void LP_OpenGLWidget::mousePressEvent(QMouseEvent *event)
 {
     mCursorPos[0] = event->pos().x();
     mCursorPos[1] = event->pos().y();
+    event->ignore();
     QOpenGLWidget::mousePressEvent(event);
 }
 
