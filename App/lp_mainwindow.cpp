@@ -56,8 +56,20 @@ LP_MainWindow::~LP_MainWindow()
 
 void LP_MainWindow::loadProgressWidget()
 {
-    ui->progressBar->setRange(0, 1);
-    ui->progressBar->setValue(1);
+    connect(ui->progressBar, &QProgressBar::valueChanged,
+            [this](const int &v){
+
+        qDebug() << v << "/" << ui->progressBar->maximum();
+        if ( v >= ui->progressBar->maximum()){
+            ui->progressBar->setRange(0,LP_ProgressBar::gStep);
+            ui->progressBar->setValue(LP_ProgressBar::gStep);
+            ui->progressBar->ResetValue();
+            ui->progressBar->hide();
+        }
+    });
+
+    ui->progressBar->setRange(0, LP_ProgressBar::gStep);
+    ui->progressBar->setValue(LP_ProgressBar::gStep);
     ui->progressBar->setAlignment(Qt::AlignCenter);
     ui->progressBar->hide();
 }
@@ -104,11 +116,10 @@ void LP_MainWindow::loadCommandHistory()
                 if ( !QApplication::overrideCursor()){
                     //qFatal("Event filter removed");
                     qApp->removeEventFilter(LP_CommandGroup::gCommandGroup.get());
-                    ui->progressBar->hide();
-                    ui->progressBar->setRange(0,1);
-                    ui->progressBar->setValue(1);
-                }else{
-                    ui->progressBar->setValue(ui->progressBar->value()+1);
+                }
+                if ( ui->progressBar->IsProgress()){
+                    constexpr float invStep = 1.0f / LP_ProgressBar::gStep;
+                    ui->progressBar->SetValue((ui->progressBar->NextValue()*invStep+1)*LP_ProgressBar::gStep);
                 }
                 LP_Functional::ClearCurrent();
             });
@@ -116,7 +127,9 @@ void LP_MainWindow::loadCommandHistory()
     connect(LP_CommandGroup::gCommandGroup->ActiveStack(),
             &LP_CommandStack::Pushed,qApp,
             [this](){
-                ui->progressBar->setMaximum( ui->progressBar->maximum()+1);
+                constexpr float invStep = 1.0f / LP_ProgressBar::gStep;
+                ui->progressBar->SetProgressing(true);
+                ui->progressBar->setMaximum((ui->progressBar->maximum()*invStep+1)*LP_ProgressBar::gStep);
                 ui->progressBar->show();
             });
 }
@@ -140,7 +153,8 @@ void LP_MainWindow::loadDocuments()
             auto model = pDoc->ToQStandardModel();
             tree->setModel(model);
         }
-
+        tree->setWordWrap(true);
+        tree->setColumnWidth(1,20);
     },Qt::QueuedConnection);
 
     connect(&LP_Document::gDoc, &LP_Document::requestGLSetup,

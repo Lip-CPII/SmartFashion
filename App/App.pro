@@ -15,12 +15,14 @@ SOURCES += \
     lp_application.cpp \
     main.cpp \
     lp_mainwindow.cpp \
-    ui/lp_openglwidget.cpp
+    ui/lp_openglwidget.cpp \
+    ui/lp_progressbar.cpp
 
 HEADERS += \
     lp_application.h \
     lp_mainwindow.h \
-    ui/lp_openglwidget.h
+    ui/lp_openglwidget.h \
+    ui/lp_progressbar.h
 
 FORMS += \
     lp_mainwindow.ui
