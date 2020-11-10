@@ -12,6 +12,7 @@
 
 class QOpenGLBuffer;
 class QComboBox;
+class QLabel;
 class QOpenGLShaderProgram;
 
 class LP_YOLO_Helper : public LP_Functional
@@ -51,11 +52,13 @@ private:
     QOpenGLBuffer *mIndices;
     QImage mImage;
     QString mVideoFile;
+    QString mExportPath;
     std::shared_ptr<cv::VideoCapture> mCVCam;
     double mCurrentTime = 0.0;
     double mTotalTime = 0.0;
     int mFBOHeight = 0;
     QWidget *mGLWidget = nullptr;
+    QLabel *mLabel = nullptr;
     std::weak_ptr<LP_RendererCamImpl> mCam;
     QReadWriteLock mLock;
     QThreadPool mPool;
@@ -66,6 +69,13 @@ private:
         std::pair<QVector3D,QVector3D> mPickPoints3D;
         std::vector<QVector3D> mRect;
         short mClass;
+
+        /**
+         * @brief hit
+         * @param pos
+         * @return true is the "pos" hits the top-left corner
+         */
+        static bool hit(const QPoint &pos, const YOLO_BoundingBox &box, std::weak_ptr<LP_RendererCamImpl> camw);
     };
     std::vector<YOLO_BoundingBox> mBoundingBoxesYOLO;
     std::pair<QVector2D, QVector2D> mCurrentBoundingBox;

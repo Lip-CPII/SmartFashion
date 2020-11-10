@@ -55,8 +55,20 @@ QWidget *LP_YOLO_Helper::DockUi()
     QPushButton *import = new QPushButton(tr("Import Video"));
     layout->addWidget(import);
 
+    QGroupBox *box = new QGroupBox;
+    QHBoxLayout *hlayout = new QHBoxLayout;
+
     QPushButton *_export = new QPushButton(tr("Export YOLO set"));
-    layout->addWidget(_export);
+    hlayout->addWidget(_export);
+
+    QPushButton *_reset = new QPushButton(tr("Reset Export Path"));
+    hlayout->addWidget(_reset);
+
+    box->setLayout(hlayout);
+    layout->addWidget(box);
+
+    mLabel = new QLabel("");
+    layout->addWidget(mLabel);
 
     mClasses = new QComboBox(mWidget.get());
     QStringList items{"0","1","2","3"};     //Classnames
@@ -143,6 +155,11 @@ QWidget *LP_YOLO_Helper::DockUi()
 
     connect(_export, &QPushButton::clicked,
             this, &LP_YOLO_Helper::exportYOLOset);
+
+    connect(_reset, &QPushButton::clicked,
+            [this](){
+        mExportPath.clear();
+    });
 
     std::function<void(const int &)> jumpFrame = [this, toQImage](const int &jumpFrames){
         if ( !mCVCam ){
@@ -419,19 +436,26 @@ void LP_YOLO_Helper::exportYOLOset()
         return tmp_s;
     };
 
-    auto dir_ = QFileDialog::getExistingDirectory(nullptr, tr("Export"));
-    QDir dir;
-    if ( !dir.exists(dir_) && !dir.mkdir(dir_)){
+    if ( mExportPath.isEmpty()){
+        mExportPath = QFileDialog::getExistingDirectory(nullptr, tr("Export"));
+        if ( mExportPath.isEmpty()){
+            QMessageBox::information(mWidget.get(),tr("Information"),tr("File not exported"));
+            return;
+        }
+    }
+
+    QDir dir(mExportPath);
+    if ( !dir.exists()/* && !dir.mkdir(dir_)*/){
         QMessageBox::information(mWidget.get(),tr("Information"),tr("Cannot create folder"));
         return;
     }
-    dir.cd(dir_);
+//    dir.cd(dir_);
 
     auto id = gen_random(16);
-    QFile file(dir.dirName()+QString("/%1.txt").arg(id));
+    QFile file(dir.absolutePath()+QString("/%1.txt").arg(id));
 
     if ( !file.open(QIODevice::WriteOnly)){
-        QMessageBox::information(mWidget.get(),tr("Information"),tr("Cannot save file"));
+        QMessageBox::information(mWidget.get(),tr("Information"),tr("Cannot save file : %1").arg(file.fileName()));
         return;
     }
 
@@ -473,7 +497,9 @@ void LP_YOLO_Helper::exportYOLOset()
     QTextStream out(&file);
     out << chunk;
     file.close();
-    mImage.save(dir.dirName()+QString("/%1.jpg").arg(id), "JPG", 100);
+    mImage.save(dir.absolutePath()+QString("/%1.jpg").arg(id), "JPG", 100);
+
+    mLabel->setText(tr("Exported %1").arg(id));
 }
 
 void LP_YOLO_Helper::initializeGL()
@@ -570,6 +596,8 @@ bool LP_YOLO_Helper::eventFilter(QObject *watched, QEvent *event)
     const auto &&h = widget->height();
     mGLWidget = widget;
 
+    mLabel->setText( mExportPath );
+
     if ( QEvent::MouseMove == event->type()){
         auto e = static_cast<QMouseEvent*>(event);
         if ( e->buttons() == Qt::LeftButton ){
@@ -591,7 +619,31 @@ bool LP_YOLO_Helper::eventFilter(QObject *watched, QEvent *event)
     }else if ( QEvent::MouseButtonRelease == event->type()){
         auto e = static_cast<QMouseEvent*>(event);
         if ( e->button() == Qt::LeftButton ){
-            mCurrentBoundingBox.second = QVector2D(e->pos().x(), h - e->pos().y());
+            bool bHit = false;
+            auto cend = mBoundingBoxesYOLO.cend();
+            for ( auto it = mBoundingBoxesYOLO.begin(); it != cend; ++it ){
+                bHit = YOLO_BoundingBox::hit(e->pos(), *it, mCam);
+                if ( bHit ) {
+                    auto cam = mCam.lock();
+
+                    QMatrix4x4 proj = cam->ProjectionMatrix(),
+                               view = cam->ViewMatrix(),
+                               vp   = cam->ViewportMatrix();
+                    auto mvp = vp * proj * view;
+                    auto p0 = it->mPickPoints3D.first,
+                         p1 = it->mPickPoints3D.second;
+
+                    mCurrentBoundingBox.first =  QVector2D(mvp * p0);
+                    mCurrentBoundingBox.second = QVector2D(mvp * p1);
+                    mClasses->setCurrentIndex(it->mClass);
+
+                    mBoundingBoxesYOLO.erase(it);
+                    break;
+                }
+            }
+            if (!bHit){
+                mCurrentBoundingBox.second = QVector2D(e->pos().x(), h - e->pos().y());
+            }
             emit glUpdateRequest();
             return true;
         }else if ( e->button() == Qt::RightButton ){
@@ -735,4 +787,41 @@ void LP_YOLO_Helper::PainterDraw(QWidget *glW)
 
 
     painter.setFont(orgFont);
+}
+
+bool LP_YOLO_Helper::YOLO_BoundingBox::hit(const QPoint &pos, const YOLO_BoundingBox &b_, std::weak_ptr<LP_RendererCamImpl> camw)
+{
+    auto cam = camw.lock();
+    auto proj = cam->ProjectionMatrix(),
+         view = cam->ViewMatrix(),
+         vp   = cam->ViewportMatrix();
+    auto mvp = vp * proj * view;
+
+    const auto &&h = cam->ResolutionY();
+
+    float x = b_.mPickPoints3D.first.x(),
+          y = b_.mPickPoints3D.first.y();
+    if ( x > b_.mPickPoints3D.second.x()){
+        x = b_.mPickPoints3D.second.x();
+    }
+    if ( y < b_.mPickPoints3D.second.y()){
+        y = b_.mPickPoints3D.second.y();
+    }
+    int fontSize(13);
+    QFont font("Arial", fontSize);
+    QFontMetrics fmetric(font);
+    const auto hOffset = fmetric.height()*0.8;
+
+    QVector3D org(x, y, 0.0);
+    org = mvp * org;            //Transform back to OpenGL's screen space
+
+    org.setY( h - org.y() + hOffset);
+
+    auto text = QString("%1.").arg(b_.mClass,3);
+
+    auto bR = fmetric.boundingRect(text);
+    bR.translate(org.x(), org.y());
+
+    qDebug() << bR << pos;
+    return bR.contains(pos);
 }
