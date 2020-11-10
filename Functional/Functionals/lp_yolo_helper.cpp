@@ -419,12 +419,13 @@ void LP_YOLO_Helper::exportYOLOset()
         return tmp_s;
     };
 
+    auto dir_ = QFileDialog::getExistingDirectory(nullptr, tr("Export"));
     QDir dir;
-    if ( !dir.exists("YOLOv3_data") && !dir.mkdir("YOLOv3_data")){
+    if ( !dir.exists(dir_) && !dir.mkdir(dir_)){
         QMessageBox::information(mWidget.get(),tr("Information"),tr("Cannot create folder"));
         return;
     }
-    dir.cd("YOLOv3_data");
+    dir.cd(dir_);
 
     auto id = gen_random(16);
     QFile file(dir.dirName()+QString("/%1.txt").arg(id));

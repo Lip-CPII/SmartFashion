@@ -187,7 +187,6 @@ void LP_Draw_Dots::FunctionalRender(QOpenGLContext *ctx, QSurface *surf, QOpenGL
         l.emplace_back(QVector3D( 1.0f, j*vStep - 1.0f, 0.1f ));
     }
 
-    f->glDisable(GL_MULTISAMPLE);
     f->glEnable(GL_BLEND);
     f->glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -195,7 +194,6 @@ void LP_Draw_Dots::FunctionalRender(QOpenGLContext *ctx, QSurface *surf, QOpenGL
     f->glDrawArrays(GL_LINES, 0, GLsizei(l.size()));
     f->glDisable(GL_BLEND);
 
-    f->glEnable(GL_MULTISAMPLE);
 
     mProgram->disableAttributeArray("a_pos"); //Disable the "a_pos" buffer
 

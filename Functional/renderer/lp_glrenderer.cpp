@@ -7,6 +7,7 @@
 #include "lp_geometry.h"
 
 #include <cmath>
+#include <memory>
 
 #include <QOpenGLExtraFunctions>
 #include <QOpenGLContext>

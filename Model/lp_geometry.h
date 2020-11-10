@@ -5,6 +5,7 @@
 #include "lp_object.h"
 #include <QVector3D>
 
+
 class LP_GeometryImpl;
 typedef std::shared_ptr<LP_GeometryImpl> LP_Geometry;
 typedef std::weak_ptr<LP_GeometryImpl> LP_Geometryw;
