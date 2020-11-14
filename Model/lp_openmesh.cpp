@@ -182,13 +182,16 @@ bool LP_OpenMeshImpl::DrawSetup(QOpenGLContext *ctx, QSurface *surf, QVariant &o
         return true;
     }
 
-    constexpr char vsh2[] =   "attribute vec3 a_pos;\n"
+    const char vsh2[] =
+            "attribute vec3 a_pos;\n"
             "uniform mat4 m4_mvp;\n"
             "void main(){\n"\
             "   gl_Position = m4_mvp*vec4(a_pos, 1.0);\n"
             "   gl_PointSize = 15.0;\n"
             "}";
-    constexpr char fsh2[] =   "uniform vec3 u_color;\n"
+    const char fsh2[] =
+            "precision mediump float;\n"
+            "uniform vec3 u_color;\n"
             "void main(){\n"
             "   gl_FragColor = vec4(u_color,1.0);\n"
             "}";
