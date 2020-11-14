@@ -164,6 +164,7 @@ void LP_Draw_Dots::FunctionalRender(QOpenGLContext *ctx, QSurface *surf, QOpenGL
     mVBO->release();
     mIndices->release();
     tex_.release();
+    tex_.destroy();
 
     mProgram->disableAttributeArray("a_tex");
 

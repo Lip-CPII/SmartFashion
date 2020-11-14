@@ -61,11 +61,13 @@ void LP_OpenMeshImpl::Draw(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebuff
     prog->setUniformValue("m3_normal", view.normalMatrix());
     prog->enableAttributeArray("a_pos");
     prog->enableAttributeArray("a_norm");
+    prog->enableAttributeArray("a_color");
 
     mVBO->bind();
     mIndices->bind();
-    prog->setAttributeBuffer("a_pos",GL_FLOAT, 0, 3, 24);
-    prog->setAttributeBuffer("a_norm",GL_FLOAT, 12, 3, 24);
+    prog->setAttributeBuffer("a_pos",GL_FLOAT, 0, 3, 36);
+    prog->setAttributeBuffer("a_norm",GL_FLOAT, 12, 3, 36);
+    prog->setAttributeBuffer("a_color",GL_FLOAT, 24, 3, 36);
 
     f->glDrawElements(GL_TRIANGLES, GLsizei(mStrides[0]), GL_UNSIGNED_INT, nullptr);
 
@@ -74,6 +76,7 @@ void LP_OpenMeshImpl::Draw(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebuff
 
     prog->disableAttributeArray("a_pos");
     prog->disableAttributeArray("a_norm");
+    prog->disableAttributeArray("a_color");
     prog->release();
 
     f->glLineWidth(2.0f);
@@ -86,8 +89,8 @@ void LP_OpenMeshImpl::Draw(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebuff
 
     mProgramBoundary->enableAttributeArray("a_pos");
     mProgramBoundary->enableAttributeArray("a_norm");
-    mProgramBoundary->setAttributeBuffer("a_pos",GL_FLOAT, 0, 3, 24);
-    mProgramBoundary->setAttributeBuffer("a_norm",GL_FLOAT, 12, 3, 24);
+    mProgramBoundary->setAttributeBuffer("a_pos",GL_FLOAT, 0, 3, 36);
+    mProgramBoundary->setAttributeBuffer("a_norm",GL_FLOAT, 12, 3, 36);
 
     f->glDrawElements(  GL_LINES,
                         GLsizei(mStrides[1]-mStrides[0]),
@@ -130,26 +133,30 @@ bool LP_OpenMeshImpl::DrawSetup(QOpenGLContext *ctx, QSurface *surf, QVariant &o
         vsh =
                 "attribute vec3 a_pos;\n"
                 "attribute vec3 a_norm;\n"
+                "attribute vec3 a_color;\n"
                 "uniform mat4 m4_view;\n"
                 "uniform mat4 m4_mvp;\n"
                 "uniform mat3 m3_normal;\n"
                 "varying vec3 normal;\n"
                 "varying vec3 pos;\n"
+                "varying vec3 vcolor;\n"
                 "void main(){\n"
                 "   pos = vec3( m4_view * vec4(a_pos, 1.0));\n"
                 "   normal = m3_normal * a_norm;\n"
+                "   vcolor = a_color;\n"
                 "   gl_Position = m4_mvp*vec4(a_pos, 1.0);\n"
                 "}";
         fsh =
                 "varying vec3 normal;\n"
                 "varying vec3 pos;\n"
+                "varying vec3 vcolor;\n"
                 "void main(){\n"
                 "   vec3 lightPos = vec3(0.0, 1000.0, 0.0);\n"
                 "   vec3 viewDir = normalize( - pos);\n"
                 "   vec3 lightDir = normalize(lightPos - pos);\n"
                 "   vec3 H = normalize(viewDir + lightDir);\n"
                 "   vec3 N = normalize(normal);\n"
-                "   vec3 ambi = vec3(0.2,0.2,0.2);\n"
+                "   vec3 ambi = vcolor;\n"
                 "   float Kd = max(dot(H, N), 0.0);\n"
                 "   vec3 diff = Kd * vec3(0.8, 0.8, 0.8);\n"
                 "   vec3 color = ambi + Kd * diff;\n"
@@ -209,14 +216,29 @@ bool LP_OpenMeshImpl::DrawSetup(QOpenGLContext *ctx, QSurface *surf, QVariant &o
 
     auto nVs = mMesh->n_vertices();
     mVBO->bind();
-    mVBO->allocate(int( 2 * nVs * sizeof(OpMesh::Point)));
+    mVBO->allocate(int( nVs * (sizeof(OpMesh::Point)+
+                               sizeof(OpMesh::Normal)+
+                               sizeof(OpMesh::Point))));
     //mVBO->allocate( m->points(), int( m->n_vertices() * sizeof(*m->points())));
     auto ptr = static_cast<OpMesh::Point*>(mVBO->map(QOpenGLBuffer::WriteOnly));
     auto pptr = mMesh->points();
     auto nptr = mMesh->vertex_normals();
-    for ( size_t i=0; i<nVs; ++i, ++ptr, ++pptr, ++nptr ){
+    auto cptr = mMesh->vertex_colors();
+
+    QVector3D c;
+    const float _inv = 1.0f / 255.0f;
+    qDebug() << "Size of : " << sizeof(OpMesh::Point) << " , color - " << sizeof(OpMesh::Color);
+    for ( size_t i=0; i<nVs; ++i, ++ptr, ++pptr, ++nptr, ++cptr ){
         memcpy(ptr, pptr, sizeof(OpMesh::Point));
         memcpy(++ptr, nptr, sizeof(OpMesh::Normal));
+
+        const uchar *_p = cptr->data();
+
+        c.setX(_p[0] * _inv);
+        c.setY(_p[1] * _inv);
+        c.setZ(_p[2] * _inv);
+
+        memcpy(++ptr, &c[0], sizeof(OpMesh::Point));
 
         if ( mBBmin.x() > (*pptr)[0]){
             mBBmin.setX((*pptr)[0]);
@@ -320,7 +342,7 @@ void LP_OpenMeshImpl::DrawSelect(QOpenGLContext *ctx, QSurface *surf, QOpenGLFra
     mVBO->bind();
     mIndices->bind();
     prog->enableAttributeArray("a_pos");
-    prog->setAttributeBuffer("a_pos",GL_FLOAT, 0, 3, 24);
+    prog->setAttributeBuffer("a_pos",GL_FLOAT, 0, 3, 36);
 
     f->glDrawElements(GL_TRIANGLES, GLsizei(mStrides[0]), GL_UNSIGNED_INT, nullptr);
 

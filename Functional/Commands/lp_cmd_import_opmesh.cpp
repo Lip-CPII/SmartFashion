@@ -32,11 +32,13 @@ void LP_Cmd_Import_OpMesh::redo()
 #endif
 
     OpenMesh::IO::Options opt_;
+    opt_ += OpenMesh::IO::Options::VertexColor;
+
     MyMesh mesh_ = std::make_shared<OpMesh>();
 //    mesh_->request_face_normals();
-    mesh_->request_face_colors();
+//    mesh_->request_face_colors();
     mesh_->request_vertex_normals();
-//    mesh_->request_vertex_colors();
+    mesh_->request_vertex_colors();
 //    mesh_->request_vertex_texcoords2D();
     bool rc = OpenMesh::IO::read_mesh(*mesh_.get(), mFile.toStdString(), opt_ );
 
@@ -55,6 +57,8 @@ void LP_Cmd_Import_OpMesh::redo()
         return;
     }
 
+    auto tooltip = QObject::tr("%1 vertices, %2 edges, %3 faces\n").arg(nv).arg(ne).arg(nf);
+
     // update face and vertex normals
     if ( ! opt_.check( OpenMesh::IO::Options::FaceNormal ) )
       mesh_->update_face_normals();
@@ -65,8 +69,6 @@ void LP_Cmd_Import_OpMesh::redo()
       mesh_->update_vertex_normals();
     else
       std::cout << "File provides vertex normals\n";
-
-    auto tooltip = QObject::tr("%1 vertices, %2 edges, %3 faces\n").arg(nv).arg(ne).arg(nf);
 
 #ifdef TIMER_LOG
     qDebug() << QString("Rebuild mesh info : %1 ms").arg(timer.nsecsElapsed() * 1e-6);
@@ -87,6 +89,13 @@ void LP_Cmd_Import_OpMesh::redo()
       bbMin.minimize( OpenMesh::vector_cast<Vec3f>(mesh_->point(*vIt)));
       bbMax.maximize( OpenMesh::vector_cast<Vec3f>(mesh_->point(*vIt)));
     }
+    if ( ! opt_.check( OpenMesh::IO::Options::VertexColor ) ){
+        for (vIt = mesh_->vertices_begin(); vIt!=vEnd; ++vIt){
+            mesh_->set_color(*vIt, OpMesh::Color(60,60,60));
+        }
+    }
+    else
+      std::cout << "File provides vertex color\n";
 
     tooltip += QString("BBox max(%1, %2, %3), ").arg(bbMax[0]).arg(bbMax[1]).arg(bbMax[2]);
     tooltip += QString("min(%1, %2, %3)\n").arg(bbMin[0]).arg(bbMin[1]).arg(bbMin[2]);

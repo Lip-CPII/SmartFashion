@@ -55,16 +55,22 @@ QWidget *LP_YOLO_Helper::DockUi()
     QPushButton *import = new QPushButton(tr("Import Video"));
     layout->addWidget(import);
 
+    QPushButton *importbx = new QPushButton(tr("Import BoundingBox"));
+    layout->addWidget(importbx);
+
     QGroupBox *box = new QGroupBox;
-    QHBoxLayout *hlayout = new QHBoxLayout;
+    QGridLayout *_glayout = new QGridLayout;
 
     QPushButton *_export = new QPushButton(tr("Export YOLO set"));
-    hlayout->addWidget(_export);
+    _glayout->addWidget(_export,0,0);
 
     QPushButton *_reset = new QPushButton(tr("Reset Export Path"));
-    hlayout->addWidget(_reset);
+    _glayout->addWidget(_reset,0,1);
 
-    box->setLayout(hlayout);
+    QPushButton *_litup = new QPushButton(tr("Lightup"));
+    _glayout->addWidget(_litup,1,0,1,2);
+
+    box->setLayout(_glayout);
     layout->addWidget(box);
 
     mLabel = new QLabel("");
@@ -84,12 +90,14 @@ QWidget *LP_YOLO_Helper::DockUi()
     QPushButton *backward = new QPushButton(tr("15 frames <<"));
     QPushButton *allback = new QPushButton(tr("|<"));
     QPushButton *end = new QPushButton(tr(">|"));
+    QPushButton *autoExp = new QPushButton(tr("AutoExp"));
 
     glayout->addWidget(allback,0,0);
     glayout->addWidget(backward,1,0);
     glayout->addWidget(play,0,1);
     glayout->addWidget(forward,1,1);
     glayout->addWidget(end,0,2);
+    glayout->addWidget(autoExp,1,2);
 
     group->setLayout(glayout);
     group->setMaximumHeight(100);
@@ -153,12 +161,88 @@ QWidget *LP_YOLO_Helper::DockUi()
         group->setEnabled(true);
     });
 
+    connect(importbx, &QPushButton::clicked,
+            [this, toQImage](){
+        if ( mImage.isNull()){
+            QMessageBox::information(0,"Information", "Import a reference image first");
+            return;
+        }
+        auto fileName = QFileDialog::getOpenFileName(mWidget.get(),tr("Open Bounding boxes"),QString(),
+                                                     "*.txt");
+        if ( fileName.isEmpty()){
+            return;
+        }
+        QFile file(fileName);
+        if ( !file.open(QIODevice::ReadOnly)){
+            return;
+        }
+        auto cam = mCam.lock();
+        auto mvp = cam->ViewportMatrix() * cam->ProjectionMatrix() * cam->ViewMatrix();
+        mvp = mvp.inverted();
+
+        const auto imgW = mImage.width(),
+                   imgH = mImage.height();
+        const auto hImgW = 0.5f*imgW,
+                   hImgH = 0.5f*imgH;
+
+        QTextStream in(&file);
+        QString line;
+        while (in.readLineInto(&line)) {
+            auto items = line.split(" ");
+            YOLO_BoundingBox box;
+            box.mClass = items.first().toInt();
+            QVector3D center(items.at(1).toFloat() * imgW, items.at(2).toFloat() * imgH, 0.0f);
+            float w = items.at(3).toFloat() * imgW,
+                  h = items.at(4).toFloat() * imgH;
+
+            box.mPickPoints3D.first = QVector3D(center.x() - 0.5f * w - hImgW,
+                                                hImgH - center.y() + 0.5f*h, 0.1f);
+            box.mPickPoints3D.second = QVector3D(center.x() + 0.5f * w - hImgW,
+                                                 hImgH - center.y() - 0.5f*h, 0.1f);
+
+            box.mPickPoints.first = QVector2D(center.x() - 0.5f * w - hImgW,
+                                              hImgH - center.y() + 0.5f*h);
+            box.mPickPoints.second = QVector2D(center.x() + 0.5f * w - hImgW,
+                                               hImgH - center.y() - 0.5f*h);
+
+            mBoundingBoxesYOLO.emplace_back(std::move(box));
+
+            qDebug() << items;
+        }
+        file.close();
+        emit glUpdateRequest();
+    });
+
+
     connect(_export, &QPushButton::clicked,
             this, &LP_YOLO_Helper::exportYOLOset);
 
     connect(_reset, &QPushButton::clicked,
             [this](){
         mExportPath.clear();
+    });
+
+    connect(_litup, &QPushButton::clicked,
+            [this](){
+        if ( mVideoFile.isEmpty()){
+            return;
+        }
+        qDebug() << mVideoFile;
+        QProcess proc;
+        connect(&proc, &QProcess::readyReadStandardError,[&](){
+           qDebug() << proc.readAllStandardError();
+           proc.write("y \r\n");
+        });
+        connect(&proc, &QProcess::readyReadStandardOutput,[&](){
+           qDebug() << proc.readAllStandardOutput();
+        });
+        QFileInfo info(mVideoFile);
+        proc.start("ffmpeg",{"-i", mVideoFile.toUtf8(), "-vf", "eq=brightness=0.06:saturation=2", "-c:a",
+                             "copy", info.absolutePath()+"/litup_"+info.fileName()});
+        if (!proc.waitForStarted(3000)){
+            return;
+        }
+        proc.waitForFinished(900000);
     });
 
     std::function<void(const int &)> jumpFrame = [this, toQImage](const int &jumpFrames){
@@ -234,9 +318,62 @@ QWidget *LP_YOLO_Helper::DockUi()
                 }
                 mImage = toQImage(frame);
                 mCurrentTime += frame_msec;
+
                 *mCVCam >> frame;
                 mLock.unlock();
                 QThread::msleep(5);
+                emit glUpdateRequest();
+            }
+        });
+        mWatcher.setFuture(future);
+    });
+
+    connect(autoExp, &QPushButton::clicked,
+            [this, toQImage](){
+        if ( mWatcher.isRunning()){
+            mLock.lockForWrite();
+            if ( mPause ){
+                mWait.wakeOne();
+                mPause = false;
+            }else{
+                mPause = true;
+            }
+            mLock.unlock();
+            return;
+        }
+        auto future = QtConcurrent::run(&mPool,[this,toQImage](){
+            if ( !mCVCam ){
+                return;
+            }
+            const double frame_rate = mCVCam->get(cv::CAP_PROP_FPS);
+            const double frame_msec = 1000.0 / frame_rate;
+            cv::Mat frame;
+            mLock.lockForRead();
+            mCVCam->read(frame);
+            mLock.unlock();
+
+            const int skipFrames = 15;
+            while (!frame.empty()){
+                mLock.lockForWrite();
+                if ( mPause ){
+                    mWait.wait(&mLock);
+                }
+                if ( mStop ){
+                    mLock.unlock();
+                    break;
+                }
+                mImage = toQImage(frame);
+                mCurrentTime += frame_msec;
+                for ( auto i=0; i<skipFrames; ++i ){//Skip frames
+                    mCVCam->grab();
+                    mCurrentTime += frame_msec;
+                }
+                *mCVCam >> frame;
+                mLock.unlock();
+
+                exportYOLOset();    //Export the set
+
+                QThread::usleep(1);
                 emit glUpdateRequest();
             }
         });
@@ -436,6 +573,8 @@ void LP_YOLO_Helper::exportYOLOset()
         return tmp_s;
     };
 
+    qDebug() << "Check path";
+
     if ( mExportPath.isEmpty()){
         mExportPath = QFileDialog::getExistingDirectory(nullptr, tr("Export"));
         if ( mExportPath.isEmpty()){
@@ -458,6 +597,8 @@ void LP_YOLO_Helper::exportYOLOset()
         QMessageBox::information(mWidget.get(),tr("Information"),tr("Cannot save file : %1").arg(file.fileName()));
         return;
     }
+
+    qDebug() << "Export information";
 
     const float hImgW = 0.5f * mImage.width(),
                 hImgH = 0.5f * mImage.height();
@@ -557,7 +698,9 @@ void LP_YOLO_Helper::initializeGL()
     posBuf->bind();
     posBuf->allocate(int( nVs * ( sizeof(QVector2D) + sizeof(QVector3D))));
     //mVBO->allocate( m->points(), int( m->n_vertices() * sizeof(*m->points())));
-    auto ptr = static_cast<float*>(posBuf->map(QOpenGLBuffer::WriteOnly));
+    auto ptr = static_cast<float*>(posBuf->mapRange(0,
+                                                    int( nVs * ( sizeof(QVector2D) + sizeof(QVector3D))),
+                                                    QOpenGLBuffer::RangeWrite | QOpenGLBuffer::RangeInvalidateBuffer));
     auto pptr = pos.begin();
     auto tptr = texCoord.begin();
     for ( int i=0; i<nVs; ++i, ++pptr, ++tptr ){
@@ -579,7 +722,9 @@ void LP_YOLO_Helper::initializeGL()
     indBuf->create();
     indBuf->bind();
     indBuf->allocate(int( indices.size() * sizeof(indices[0])));
-    auto iptr = static_cast<uint*>(indBuf->map(QOpenGLBuffer::WriteOnly));
+    auto iptr = static_cast<uint*>(indBuf->mapRange(0,
+                                                    int( indices.size() * sizeof(indices[0])),
+                                                    QOpenGLBuffer::RangeWrite | QOpenGLBuffer::RangeInvalidateBuffer));
     memcpy(iptr, indices.data(), indices.size() * sizeof(indices[0]));
     indBuf->unmap();
     indBuf->release();
