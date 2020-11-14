@@ -215,12 +215,15 @@ bool LP_OpenMeshImpl::DrawSetup(QOpenGLContext *ctx, QSurface *surf, QVariant &o
     mVBO->create();
 
     auto nVs = mMesh->n_vertices();
-    mVBO->bind();
-    mVBO->allocate(int( nVs * (sizeof(OpMesh::Point)+
+    const int _a = int( nVs * (sizeof(OpMesh::Point)+
                                sizeof(OpMesh::Normal)+
-                               sizeof(OpMesh::Point))));
+                               sizeof(OpMesh::Point)));
+    mVBO->bind();
+    mVBO->allocate( _a );
     //mVBO->allocate( m->points(), int( m->n_vertices() * sizeof(*m->points())));
-    auto ptr = static_cast<OpMesh::Point*>(mVBO->map(QOpenGLBuffer::WriteOnly));
+    auto ptr = static_cast<OpMesh::Point*>(mVBO->mapRange(0, _a,
+                                                          QOpenGLBuffer::RangeWrite |
+                                                          QOpenGLBuffer::RangeInvalidateBuffer));
     auto pptr = mMesh->points();
     auto nptr = mMesh->vertex_normals();
     auto cptr = mMesh->vertex_colors();
@@ -278,10 +281,13 @@ bool LP_OpenMeshImpl::DrawSetup(QOpenGLContext *ctx, QSurface *surf, QVariant &o
     mIndices = new QOpenGLBuffer(QOpenGLBuffer::IndexBuffer);
     mIndices->setUsagePattern(QOpenGLBuffer::StaticDraw);
 
+    const int a_ = int( indices.size() + indices_boundary.size()) * sizeof(indices[0]);
     mIndices->create();
     mIndices->bind();
-    mIndices->allocate(int(( indices.size() + indices_boundary.size()) * sizeof(indices[0])));
-    auto iptr = static_cast<uint*>(mIndices->map(QOpenGLBuffer::WriteOnly));
+    mIndices->allocate( a_ );
+    auto iptr = static_cast<uint*>(mIndices->mapRange(0, a_,
+                                                      QOpenGLBuffer::RangeWrite |
+                                                      QOpenGLBuffer::RangeInvalidateBuffer));
     memcpy(iptr, indices.data(), indices.size() * sizeof(indices[0]));
     memcpy(iptr+indices.size(), indices_boundary.data(), indices_boundary.size() * sizeof(indices_boundary[0]));
     mIndices->unmap();
