@@ -173,8 +173,8 @@ void LP_OpenGLWidget::mousePressEvent(QMouseEvent *event)
     mCursorPos[0] = event->pos().x();
     mCursorPos[1] = event->pos().y();
     event->ignore();
-    auto frame = qobject_cast<QWidget*>(parent());
-    frame->setFocus();
+//    auto frame = qobject_cast<QWidget*>(parent());
+//    frame->setFocus();
     QOpenGLWidget::mousePressEvent(event);
 }
 
@@ -338,6 +338,8 @@ void LP_OpenGLWidget::keyPressEvent(QKeyEvent *e)
 {
     auto &lock = mRenderer->Lock();
     lock.lockForWrite();
+
+    qDebug() << "Key : " << e->key();
     switch (e->key()) {
     case Qt::Key_0:
         if (Qt::KeypadModifier == e->modifiers()){
