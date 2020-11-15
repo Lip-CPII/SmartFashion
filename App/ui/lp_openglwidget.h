@@ -36,6 +36,8 @@ protected:
     void wheelEvent(QWheelEvent *e) override;
     void keyPressEvent(QKeyEvent *event) override;
     void keyReleaseEvent(QKeyEvent *event) override;
+    void focusInEvent(QFocusEvent *event) override;
+    void focusOutEvent(QFocusEvent *event) override;
 
 private:
     QOpenGLTextureBlitter *mBlitter;

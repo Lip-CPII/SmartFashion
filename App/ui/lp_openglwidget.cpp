@@ -173,13 +173,13 @@ void LP_OpenGLWidget::mousePressEvent(QMouseEvent *event)
     mCursorPos[0] = event->pos().x();
     mCursorPos[1] = event->pos().y();
     event->ignore();
-//    auto frame = qobject_cast<QWidget*>(parent());
-//    frame->setFocus();
+
     QOpenGLWidget::mousePressEvent(event);
 }
 
 void LP_OpenGLWidget::mouseReleaseEvent(QMouseEvent *event)
 {
+    event->ignore();
     if ( Qt::LeftButton == event->button()){
         QString renderer = objectName() == "openGLWidget" ? "Shade" : "Normal";//TODO non-fixed
 
@@ -215,10 +215,10 @@ void LP_OpenGLWidget::mouseReleaseEvent(QMouseEvent *event)
             emit g_GLSelector->Selected(select, deselect);
 
             mRenderer->UpdateGL();
+            event->accept();
         }
-
-        event->accept();
     }
+    QOpenGLWidget::mouseReleaseEvent(event);
 }
 
 
@@ -339,7 +339,6 @@ void LP_OpenGLWidget::keyPressEvent(QKeyEvent *e)
     auto &lock = mRenderer->Lock();
     lock.lockForWrite();
 
-    qDebug() << "Key : " << e->key();
     switch (e->key()) {
     case Qt::Key_0:
         if (Qt::KeypadModifier == e->modifiers()){
@@ -448,4 +447,26 @@ void LP_OpenGLWidget::keyPressEvent(QKeyEvent *e)
 void LP_OpenGLWidget::keyReleaseEvent(QKeyEvent *event)
 {
     event->ignore();
+    QOpenGLWidget::keyReleaseEvent(event);
+}
+
+
+void LP_OpenGLWidget::focusInEvent(QFocusEvent *event)
+{
+    auto frame = qobject_cast<QWidget*>(parent());
+    frame->setStyleSheet("QFrame{"
+                         "border:1px solid gold;"
+                         "}");
+    event->ignore();
+    QOpenGLWidget::focusInEvent(event);
+}
+
+void LP_OpenGLWidget::focusOutEvent(QFocusEvent *event)
+{
+    auto frame = qobject_cast<QWidget*>(parent());
+    frame->setStyleSheet("QFrame{"
+                         "border:1px solid transparent;"
+                         "}");
+    event->ignore();
+    QOpenGLWidget::focusOutEvent(event);
 }
