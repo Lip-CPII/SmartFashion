@@ -1,5 +1,8 @@
 # SmartFashion
 
+## News (16-11-2020) Added [PIFu HD](https://shunsukesaito.github.io/PIFuHD/) support interface as plugin example
+
+Reconstruct 3D human (mesh) from single image input. See example below.
 
 ## Install
 
@@ -73,6 +76,14 @@ Open the Smart_Fashion.pro in with the QtCreator and config the corresponding co
 
 ## Example Snapshots
 
+#### Plugins -> PIFu HD
+
+(Support Windows only based on the implemented code)
+In order to run the example plugin, [OpenPose runtimes](https://ext.bravedbrothers.com/openpose.7z) and [PIFu HD repository](https://ext.bravedbrothers.com/PIFu.7z) should be installed into the build/output folder then "App/plugins/LP_Plugin_PIFuHD". (One may download and unzip the provided backups [OpenPose](https://ext.bravedbrothers.com/openpose.7z) and [PIFu HD](https://ext.bravedbrothers.com/PIFu.7z)).
+Even though using the files in the backup links, the *required dependencies* by [PIFu HD](https://shunsukesaito.github.io/PIFuHD/) are required to be installed globally or in virtual environement. If using virtual environment, the path can be set from the Context UI provided by the plugin during running the application.
+
+![YOLO Annotator](/images/PIFuHD01.jpg)
+
 #### Plugins -> Mesh Slicer
 
 ![Slicer](/images/slicer01.JPG)
@@ -86,3 +97,4 @@ Open the Smart_Fashion.pro in with the QtCreator and config the corresponding co
 #### Tools -> YOLO Helper
 
 ![YOLO Annotator](/images/yolo01.JPG)
+
