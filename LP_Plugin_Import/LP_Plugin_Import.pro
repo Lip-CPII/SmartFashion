@@ -20,7 +20,7 @@ HEADERS += \
     lp_mesh_slicer.h
 
 # Default rules for deployment.
-target.path = $$OUT_PWD/../App/plugins
+target.path = $$OUT_PWD/../App/plugins/$$TARGET
 
 !isEmpty(target.path): INSTALLS += target
 

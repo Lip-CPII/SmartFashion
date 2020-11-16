@@ -91,7 +91,7 @@ void LP_Cmd_Import_OpMesh::redo()
     }
     if ( ! opt_.check( OpenMesh::IO::Options::VertexColor ) ){
         for (vIt = mesh_->vertices_begin(); vIt!=vEnd; ++vIt){
-            mesh_->set_color(*vIt, OpMesh::Color(60,60,60));
+            mesh_->set_color(*vIt, OpMesh::Color(52, 52, 52));
         }
     }
     else

@@ -5,7 +5,7 @@
 #include "lp_openmesh.h"
 
 
-class LP_Cmd_Import_OpMesh : public LP_Command
+class FUNCTIONAL_EXPORT LP_Cmd_Import_OpMesh : public LP_Command
 {
     REGISTER(LP_Command, LP_Cmd_Import_OpMesh)
 public:

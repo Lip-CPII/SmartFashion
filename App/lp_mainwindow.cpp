@@ -334,74 +334,79 @@ void LP_MainWindow::loadPlugins(const QString &path, QMenuBar *menubar)
         mPluginLoader = std::make_unique<QPluginLoader>();
     }
     QDir pluginsDir(path);
-    const auto entryList = pluginsDir.entryList(QDir::Files | QDir::NoSymLinks);
-    for (const QString &fileName : entryList) {
-        QPluginLoader loader(pluginsDir.absoluteFilePath(fileName));
-        QObject *plugin = loader.instance();
-        auto action = qobject_cast<LP_ActionPlugin*>(plugin);
-        if (action) {
-            auto menuName = action->MenuName();
-            auto menu = menubar->findChild<QMenu*>( menuName );
-            if ( !menu ){
-                menu = new QMenu( menuName.right( menuName.length() - 4), ui->menubar );
-                menu->setObjectName( menuName );
-                menubar->addMenu(menu);
+    const auto folders = pluginsDir.entryList(QDir::Dirs | QDir::NoSymLinks );
+    for ( auto &folder : folders ){
+        QDir folderDir(path + "/" + folder);
+        const auto entryList = folderDir.entryList(QDir::Files | QDir::NoSymLinks);
+        for (const QString &fileName : entryList) {
+            QPluginLoader loader(folderDir.absoluteFilePath(fileName));
+            QObject *plugin = loader.instance();
+            auto action = qobject_cast<LP_ActionPlugin*>(plugin);
+            if (action) {
+                auto menuName = action->MenuName();
+                auto menu = menubar->findChild<QMenu*>( menuName );
+                if ( !menu ){
+                    menu = new QMenu( menuName.right( menuName.length() - 4), ui->menubar );
+                    menu->setObjectName( menuName );
+                    menubar->addMenu(menu);
+                }
+                auto trigger = action->Trigger();
+                trigger->setData(folderDir.absoluteFilePath(fileName));    //Store the plugin path
+                menu->addAction(trigger);
+                connect(trigger, &QAction::triggered,
+                        [this, trigger](bool checked){
+                    Q_UNUSED(checked)
+                    LP_Functional::ClearCurrent();      //For plugin, current will be destructed when PluginLoader::unload()
+                    if ( mPluginLoader->isLoaded()){
+                        bool rc = mPluginLoader->unload();
+                        Q_ASSERT(rc);
+                    }
+                    mPluginLoader->setFileName(trigger->data().toString());
+                    if ( !mPluginLoader->load()){
+                        return;
+                    }
+                    QObject *plugin = mPluginLoader->instance();
+                    auto action = qobject_cast<LP_ActionPlugin*>(plugin);
+
+                    auto dockui = action->DockUi();
+                    if ( dockui ){
+                        ui->scroll_dockui->layout()->addWidget(dockui);
+                        ui->tabWidget->setCurrentIndex(1);
+                    }else{
+                        ui->tabWidget->setCurrentIndex(0);
+                    }
+
+                    ui->openGLWidget->installEventFilter(action);
+
+                    connect(ui->openGLWidget->Renderer(),
+                            &LP_GLRenderer::postRender,
+                            action,
+                            &LP_ActionPlugin::FunctionalRender,
+                            Qt::DirectConnection);
+                    connect(action, &LP_ActionPlugin::glUpdateRequest,
+                            ui->openGLWidget->Renderer(), &LP_GLRenderer::updateGL
+                            ,Qt::QueuedConnection);
+                    connect(action,
+                            &LP_ActionPlugin::glContextRequest,
+                            ui->openGLWidget->Renderer(),
+                            &LP_GLRenderer::glContextResponse,
+                            Qt::BlockingQueuedConnection);
+                    connect(action,
+                            &LP_ActionPlugin::destroyed,
+                            action,
+                            [this,action](){
+                                ui->openGLWidget->removeEventFilter(action);
+                            },Qt::DirectConnection);
+                    LP_Functional::SetCurrent(action);
+                    action->Run();
+                });
+
+                qDebug() << plugin;
+                loader.unload();
             }
-            auto trigger = action->Trigger();
-            trigger->setData(pluginsDir.absoluteFilePath(fileName));    //Store the plugin path
-            menu->addAction(trigger);
-            connect(trigger, &QAction::triggered,
-                    [this, trigger](bool checked){
-                Q_UNUSED(checked)
-                LP_Functional::ClearCurrent();      //For plugin, current will be destructed when PluginLoader::unload()
-                if ( mPluginLoader->isLoaded()){
-                    bool rc = mPluginLoader->unload();
-                    Q_ASSERT(rc);
-                }
-                mPluginLoader->setFileName(trigger->data().toString());
-                if ( !mPluginLoader->load()){
-                    return;
-                }
-                QObject *plugin = mPluginLoader->instance();
-                auto action = qobject_cast<LP_ActionPlugin*>(plugin);
-
-                auto dockui = action->DockUi();
-                if ( dockui ){
-                    ui->scroll_dockui->layout()->addWidget(dockui);
-                    ui->tabWidget->setCurrentIndex(1);
-                }else{
-                    ui->tabWidget->setCurrentIndex(0);
-                }
-
-                ui->openGLWidget->installEventFilter(action);
-
-                connect(ui->openGLWidget->Renderer(),
-                        &LP_GLRenderer::postRender,
-                        action,
-                        &LP_ActionPlugin::FunctionalRender,
-                        Qt::DirectConnection);
-                connect(action, &LP_ActionPlugin::glUpdateRequest,
-                        ui->openGLWidget->Renderer(), &LP_GLRenderer::updateGL
-                        ,Qt::QueuedConnection);
-                connect(action,
-                        &LP_ActionPlugin::glContextRequest,
-                        ui->openGLWidget->Renderer(),
-                        &LP_GLRenderer::glContextResponse,
-                        Qt::BlockingQueuedConnection);
-                connect(action,
-                        &LP_ActionPlugin::destroyed,
-                        action,
-                        [this,action](){
-                            ui->openGLWidget->removeEventFilter(action);
-                        },Qt::DirectConnection);
-                LP_Functional::SetCurrent(action);
-                action->Run();
-            });
-
-            qDebug() << plugin;
-            loader.unload();
         }
     }
+
 
 //    std::function<void(QObject*,QString)> enumerateChildren;
 //    enumerateChildren = [&enumerateChildren](QObject *o, QString indent){

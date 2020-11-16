@@ -158,11 +158,11 @@ bool LP_OpenMeshImpl::DrawSetup(QOpenGLContext *ctx, QSurface *surf, QVariant &o
                 "   vec3 N = normalize(normal);\n"
                 "   vec3 ambi = vcolor;\n"
                 "   float Kd = max(dot(H, N), 0.0);\n"
-                "   vec3 diff = Kd * vec3(0.8, 0.8, 0.8);\n"
-                "   vec3 color = ambi + Kd * diff;\n"
-//                "   float Ks = pow( Kd, 80.0 );\n"
-//                "   vec3 spec = Ks * vec3(1.0, 1.0, 1.0);\n"
-//                "   color += spec;\n"
+                "   vec3 diff = Kd * vec3(0.5, 0.5, 0.5);\n"
+                "   vec3 color = ambi + diff;\n"
+                "   float Ks = pow( Kd, 80.0 );\n"
+                "   vec3 spec = Ks * vec3(0.5, 0.5, 0.5);\n"
+                "   color += spec;\n"
                 "   gl_FragColor = vec4(color,1.0);\n"
                 "}";
     }
@@ -233,7 +233,6 @@ bool LP_OpenMeshImpl::DrawSetup(QOpenGLContext *ctx, QSurface *surf, QVariant &o
 
     QVector3D c;
     const float _inv = 1.0f / 255.0f;
-    qDebug() << "Size of : " << sizeof(OpMesh::Point) << " , color - " << sizeof(OpMesh::Color);
     for ( size_t i=0; i<nVs; ++i, ++ptr, ++pptr, ++nptr, ++cptr ){
         memcpy(ptr, pptr, sizeof(OpMesh::Point));
         memcpy(++ptr, nptr, sizeof(OpMesh::Normal));
