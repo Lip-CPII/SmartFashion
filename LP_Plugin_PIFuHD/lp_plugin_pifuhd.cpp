@@ -67,6 +67,7 @@ QWidget *LP_Plugin_PIFuHD::DockUi()
             return;
         }
 
+#ifdef Q_OS_WIN
         auto future = QtConcurrent::run(&mPool,[imagePath,label](){
             QProcess proc;
             connect(&proc, &QProcess::readyReadStandardError,[&](){
@@ -145,6 +146,9 @@ QWidget *LP_Plugin_PIFuHD::DockUi()
             }
             qDebug() << "Process completed";
         });
+#else
+        label->setText("Operation is currently supported in Windows only.";
+#endif
     });
 
     return widget;
