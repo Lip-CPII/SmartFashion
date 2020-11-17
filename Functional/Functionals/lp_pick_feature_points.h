@@ -60,7 +60,7 @@ private:
     QLabel *mLabel = nullptr;
     QOpenGLShaderProgram *mProgram = nullptr;
     std::weak_ptr<LP_ObjectImpl> mObject;
-    QSet<uint> mPoints;
+    QMap<uint,uint> mPoints;
 
 private:
     /**

@@ -60,7 +60,7 @@ private:
     QOpenGLBuffer *mVBO;
     QOpenGLBuffer *mIndices;
 
-    size_t mStrides[2];
+    size_t mStrides[3];
 };
 
 

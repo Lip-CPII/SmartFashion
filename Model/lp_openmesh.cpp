@@ -79,26 +79,35 @@ void LP_OpenMeshImpl::Draw(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebuff
     prog->disableAttributeArray("a_color");
     prog->release();
 
+    QMatrix4x4 epsTrans;
+    epsTrans.translate(0.0f,0.0f,0.01f);
+
     f->glLineWidth(2.0f);
     mProgramBoundary->bind();
-    mProgramBoundary->setUniformValue("m4_mvp", proj*view );
+    mProgramBoundary->setUniformValue("m4_mvp", proj*epsTrans*view );
     mProgramBoundary->setUniformValue("u_color", QVector3D(0.0,1.0,1.0));
 
     mVBO->bind();
     mIndices->bind();
 
     mProgramBoundary->enableAttributeArray("a_pos");
-    mProgramBoundary->enableAttributeArray("a_norm");
     mProgramBoundary->setAttributeBuffer("a_pos",GL_FLOAT, 0, 3, 36);
-    mProgramBoundary->setAttributeBuffer("a_norm",GL_FLOAT, 12, 3, 36);
 
     f->glDrawElements(  GL_LINES,
                         GLsizei(mStrides[1]-mStrides[0]),
                         GL_UNSIGNED_INT,
                         (void*)(mStrides[0]*sizeof(uint)));
 
+    if ( option.toString() != "Normal"){
+        mProgramBoundary->setUniformValue("u_color", QVector3D(0.2,0.2,0.2));
+        f->glLineWidth(0.5f);
+        f->glDrawElements(  GL_LINES,
+                            GLsizei(mStrides[2]-mStrides[1]),
+                            GL_UNSIGNED_INT,
+                            (void*)(mStrides[1]*sizeof(uint)));
+    }
+
     mProgramBoundary->disableAttributeArray("a_pos");
-    mProgramBoundary->disableAttributeArray("a_norm");
 
     mVBO->release();
     mIndices->release();
@@ -206,11 +215,15 @@ bool LP_OpenMeshImpl::DrawSetup(QOpenGLContext *ctx, QSurface *surf, QVariant &o
     }
 
     std::vector<uint> indices_boundary;
+    std::vector<uint> wireframe(mMesh->n_edges()*2);
+    auto w_it = wireframe.begin();
     for ( auto &e : mMesh->edges()){
         if ( e.is_boundary()){
             indices_boundary.emplace_back( e.v0().idx());
             indices_boundary.emplace_back( e.v1().idx());
         }
+        (*w_it++) = e.v0().idx();
+        (*w_it++) = e.v1().idx();
     }
 
     mVBO = new QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
@@ -278,12 +291,12 @@ bool LP_OpenMeshImpl::DrawSetup(QOpenGLContext *ctx, QSurface *surf, QVariant &o
             //indices.emplace_back(v.idx());
             (*i_it++) = v.idx();
         }
-    }
+   }
 
     mIndices = new QOpenGLBuffer(QOpenGLBuffer::IndexBuffer);
     mIndices->setUsagePattern(QOpenGLBuffer::StaticDraw);
 
-    const int a_ = int( indices.size() + indices_boundary.size()) * sizeof(indices[0]);
+    const int a_ = int( indices.size() + indices_boundary.size() + wireframe.size()) * sizeof(indices[0]);
     mIndices->create();
     mIndices->bind();
     mIndices->allocate( a_ );
@@ -292,6 +305,7 @@ bool LP_OpenMeshImpl::DrawSetup(QOpenGLContext *ctx, QSurface *surf, QVariant &o
                                                       QOpenGLBuffer::RangeInvalidateBuffer));
     memcpy(iptr, indices.data(), indices.size() * sizeof(indices[0]));
     memcpy(iptr+indices.size(), indices_boundary.data(), indices_boundary.size() * sizeof(indices_boundary[0]));
+    memcpy(iptr+indices.size()+indices_boundary.size(), wireframe.data(), wireframe.size() * sizeof(wireframe[0]));
     mIndices->unmap();
     mIndices->release();
 
@@ -299,6 +313,7 @@ bool LP_OpenMeshImpl::DrawSetup(QOpenGLContext *ctx, QSurface *surf, QVariant &o
 
     mStrides[0] = indices.size();
     mStrides[1] = indices.size() + indices_boundary.size();
+    mStrides[2] = mStrides[1] + wireframe.size();
 
     mGLInitialized = true;
     return true;

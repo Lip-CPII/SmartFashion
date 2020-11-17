@@ -42,10 +42,12 @@ QWidget *LP_Pick_Feature_Points::DockUi()
     mLabel = new QLabel("Select A Mesh");
     QPushButton *button = new QPushButton(tr("Export"));
     QPushButton *impFts = new QPushButton(tr("Import"));
+    QPushButton *expFts = new QPushButton(tr("Export Pick Order"));
 
     layout->addWidget(impFts);
     layout->addWidget(mLabel);
     layout->addWidget(button);
+    layout->addWidget(expFts);
 
     layout->addStretch();
 
@@ -62,7 +64,10 @@ QWidget *LP_Pick_Feature_Points::DockUi()
         QTextStream in(&file);
         while (!in.atEnd()){
             auto line = in.readLine();
-            mPoints.insert(line.toUInt());
+            auto items = line.split(' ');
+            if ( 2 == items.size()){
+                mPoints.insert(items[0].toUInt(), items[1].toUInt());
+            }
         }
 
         emit glUpdateRequest();
@@ -87,7 +92,36 @@ QWidget *LP_Pick_Feature_Points::DockUi()
         auto end = mPoints.end();
         QTextStream out(&file);
         for ( auto i=mPoints.begin(); i!=end; ++i ){
-            out << *i << "\n";
+            out << i.key() << ' ' << i.value() << "\n";
+        }
+
+        file.close();
+    });
+
+    connect(expFts, &QPushButton::clicked,
+            [this](){
+        auto nPts = int(mPoints.size());
+        if ( 0 >= nPts ){
+            return;
+        }
+
+        auto savePath = QFileDialog::getSaveFileName(0,"Export LandMarks (Pick Order)");
+        if ( savePath.isEmpty()){
+            return;
+        }
+        QFile file(savePath);
+        if (!file.open(QIODevice::WriteOnly)){
+            return;
+        }
+
+        QMap<uint, uint> sorted;
+        for( auto i = mPoints.begin(); i != mPoints.end(); ++i ){
+            sorted.insert(i.value(), i.key());
+        }
+        auto end = sorted.end();
+        QTextStream out(&file);
+        for ( auto i=sorted.begin(); i!=end; ++i ){
+            out << i.value() << "\n";
         }
 
         file.close();
@@ -138,38 +172,43 @@ bool LP_Pick_Feature_Points::eventFilter(QObject *watched, QEvent *event)
                                                     c->Mesh()->points()->data(),
                                                     c->Mesh()->n_vertices(),
                                                     e->pos(), true);
-                QSet<uint> tmp_(tmp.begin(), tmp.end());
+                if ( !tmp.empty()){
+                    auto &&pt_id = tmp.front();
+                    qDebug() << "Picked : " << tmp;
+                    if (Qt::ControlModifier & e->modifiers()){
+                        if ( !mPoints.contains(pt_id)){
+                            mPoints.insert(pt_id, mPoints.size());
+                        }
+                    }else if (Qt::ShiftModifier & e->modifiers()){
+                        if ( mPoints.contains(pt_id)){
+                            qDebug() << mPoints.take(pt_id);
+                        }
+                    }else{
+                        mPoints.clear();
+                        mPoints.insert(pt_id,0);
+                    }
 
-                qDebug() << "Picked : " << tmp_;
-                if (Qt::ControlModifier & e->modifiers()){
-                    mPoints.unite(tmp_);
-                }else if (Qt::ShiftModifier & e->modifiers()){
-                    qDebug() << "Subtract : " << tmp_;
-                    mPoints.subtract(tmp_);
-                }else{
-                    mPoints = std::move(tmp_);
-                }
+                    QString info(mObject.lock()->Uuid().toString());
+                    for ( auto &p : mPoints ){
+                        info += tr("%1\n").arg(p);
+                    }
+                    mLabel->setText(info);
 
-                QString info(mObject.lock()->Uuid().toString());
-                for ( auto &p : mPoints ){
-                    info += tr("%1\n").arg(p);
+                    if (!mPoints.empty()){
+    //                    QStringList pList;
+    //                    int id=0;
+    //                    for ( auto &p : mPoints ){
+    //                        pList << QString("%5: %1 ( %2, %3, %4 )").arg(p,8)
+    //                                 .arg(c->mesh()->points()[p][0],6,'f',2)
+    //                                .arg(c->mesh()->points()[p][1],6,'f',2)
+    //                                .arg(c->mesh()->points()[p][2],6,'f',2)
+    //                                .arg(id++, 3);
+    //                    }
+    //                    mFeaturePoints.setStringList(pList);
+                        emit glUpdateRequest();
+                    }
+                    return true;
                 }
-                mLabel->setText(info);
-
-                if (!mPoints.empty()){
-//                    QStringList pList;
-//                    int id=0;
-//                    for ( auto &p : mPoints ){
-//                        pList << QString("%5: %1 ( %2, %3, %4 )").arg(p,8)
-//                                 .arg(c->mesh()->points()[p][0],6,'f',2)
-//                                .arg(c->mesh()->points()[p][1],6,'f',2)
-//                                .arg(c->mesh()->points()[p][2],6,'f',2)
-//                                .arg(id++, 3);
-//                    }
-//                    mFeaturePoints.setStringList(pList);
-                    emit glUpdateRequest();
-                }
-                return true;
             }
         }else if ( e->button() == Qt::RightButton ){
             mObject.reset();
@@ -223,7 +262,11 @@ void LP_Pick_Feature_Points::FunctionalRender(QOpenGLContext *ctx, QSurface *sur
     if ( !mPoints.empty()){                         //If some vertices are picked and record in mPoints
         mProgram->setUniformValue("f_pointSize", 13.0f);    //Enlarge the point-size
         mProgram->setUniformValue("v4_color", QVector4D( 0.1f, 0.6f, 0.1f, 1.0f )); //Change to another color
-        std::vector<uint> list(mPoints.begin(), mPoints.end());
+
+        std::vector<uint> list(mPoints.size());
+        for ( size_t i = 0; i<list.size(); ++i ){
+            list[i] = (mPoints.begin()+i).key();
+        }
         // ONLY draw the picked vertices again
         f->glDrawElements(GL_POINTS, GLsizei(mPoints.size()), GL_UNSIGNED_INT, list.data());
     }

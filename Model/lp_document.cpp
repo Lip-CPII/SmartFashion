@@ -33,8 +33,11 @@ void LP_Document::RemoveObject(LP_Objectw &&ent, LP_Objectw &&parent)
     if ( auto p = parent.lock()){
         p->mChildren.remove(ent);
     }else{
-        mObjects.remove(ent);
+        if (!mObjects.remove(ent)){
+            mHiddens.remove(ent);
+        }
     }
+
     emit updateTreeView();
     emit requestGLCleanup(ent);
 }
