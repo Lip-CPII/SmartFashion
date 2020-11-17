@@ -68,7 +68,10 @@ QWidget *LP_YOLO_Helper::DockUi()
     _glayout->addWidget(_reset,0,1);
 
     QPushButton *_litup = new QPushButton(tr("Lightup"));
-    _glayout->addWidget(_litup,1,0,1,2);
+    _glayout->addWidget(_litup,1,0);
+
+    QPushButton *_spreadData = new QPushButton(tr("Split Train/Eval."));
+    _glayout->addWidget(_spreadData,1,1);
 
     box->setLayout(_glayout);
     layout->addWidget(box);
@@ -243,6 +246,94 @@ QWidget *LP_YOLO_Helper::DockUi()
             return;
         }
         proc.waitForFinished(900000);
+    });
+
+    connect(_spreadData, &QPushButton::clicked,
+            [this](){
+        auto folders = QFileDialog::getExistingDirectory(0,"Select folder");
+        if ( folders.isEmpty()){
+            return;
+        }
+        QDir folders_dir(folders);
+        if ( !folders_dir.exists("images") || !folders_dir.exists("labels")){
+            qDebug() << "No image/labels folder";
+            return;
+        }
+
+        QDir newFolders(folders);
+        auto tmp = tr("split_data_%1").arg(QDateTime::currentSecsSinceEpoch());
+        if ( !newFolders.mkdir(tmp)){
+            qDebug() << "Cannot create split data folder : " << newFolders.path()+"/"+tmp;
+            return;
+        }
+        newFolders.cd(tmp);
+
+
+        QDir imageFolders(folders_dir);
+        imageFolders.cd("images");
+        auto subFolders = imageFolders.entryList(QDir::Dirs | QDir::NoSymLinks | QDir::NoDotAndDotDot);
+        qDebug() << subFolders;
+
+        uint nfiles = 0;
+        const uint nStep = 5;   //Every nStep files becomes the eval.
+
+        const auto newTrainImagePath = newFolders.path() + "/train/images/";
+        const auto newTrainLabelsPath = newFolders.path() + "/train/labels/";
+        const auto newEvalImagePath = newFolders.path() + "/eval/images/";
+        const auto newEvalLabelsPath = newFolders.path() + "/eval/labels/";
+
+        for ( auto &sub : subFolders ){
+            const auto subImagePath = imageFolders.path() + "/" + sub + "/";
+            const auto subLabelPath = folders_dir.path() + "/labels/" + sub + "/";
+            QDir sub_dir(subImagePath);
+            auto files = sub_dir.entryList(QDir::Files | QDir::NoSymLinks, QDir::Time);
+
+            newFolders.mkpath("train/images/"+sub);
+            newFolders.mkpath("train/labels/"+sub);
+            newFolders.mkpath("eval/images/"+sub);
+            newFolders.mkpath("eval/labels/"+sub);
+
+            const auto newSubTrainImagePath = newTrainImagePath + sub + "/";
+            const auto newSubTrainLabelsPath = newTrainLabelsPath + sub + "/";
+            const auto newSubEvalImagePath = newEvalImagePath + sub + "/";
+            const auto newSubEvalLabelsPath = newEvalLabelsPath + sub + "/";
+
+            for ( auto &file : files ){
+                QFileInfo info(file);
+                if ( 0 == nfiles % nStep ){//Copy to eval
+                    if ( !QFile::copy(subImagePath + file,
+                                      newSubEvalImagePath + file)){
+                        qDebug() << "Copy image failed : " << subImagePath + file + " -> " +
+                                    newSubEvalImagePath + file;
+                    }
+                    if ( !QFile::copy(subLabelPath +
+                                      info.baseName() + ".txt",
+                                      newSubEvalLabelsPath + info.baseName() + ".txt")){
+                        qDebug() << "Copy label failed : " << folders_dir.path() + "/labels/" + sub + "/" +
+                                    info.baseName() + ".txt" + " -> " +
+                                    newSubEvalLabelsPath + info.baseName() + ".txt";
+                    }
+                }else{  //Copy to train
+                    if ( !QFile::copy(subImagePath + file,
+                                      newSubTrainImagePath + file)){
+                        qDebug() << "Copy image failed : " << subImagePath + file + " -> " +
+                                    newSubEvalImagePath + file;
+                    }
+                    if ( !QFile::copy(subLabelPath +
+                                      info.baseName() + ".txt",
+                                      newSubTrainLabelsPath + info.baseName() + ".txt")){
+                        qDebug() << "Copy label failed : " << folders_dir.path() + "/labels/" + sub + "/" +
+                                    info.baseName() + ".txt" + " -> " +
+                                    newSubEvalLabelsPath + info.baseName() + ".txt";
+                    }
+                }
+                ++nfiles;
+            }
+        }
+
+        qDebug() << "Total processed files : " << nfiles;
+
+        return;
     });
 
     std::function<void(const int &)> jumpFrame = [this, toQImage](const int &jumpFrames){

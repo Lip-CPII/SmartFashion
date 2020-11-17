@@ -556,6 +556,7 @@ std::vector<uint> LP_GLSelector::SelectPoints3D(const QString &renderername, con
         f->glScissor(org[0],org[1],sw, sh);
 
         f->glEnable( GL_DEPTH_TEST );
+        f->glDepthFunc( GL_LEQUAL );
         f->glEnable( GL_PROGRAM_POINT_SIZE );
 
         fbo->bind();

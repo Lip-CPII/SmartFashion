@@ -5,6 +5,7 @@
 #include "renderer/lp_glselector.h"
 #include "renderer/lp_glrenderer.h"
 
+#include <QFileDialog>
 #include <QVBoxLayout>
 #include <QMouseEvent>
 #include <QOpenGLContext>
@@ -40,9 +41,57 @@ QWidget *LP_Pick_Feature_Points::DockUi()
 
     mLabel = new QLabel("Select A Mesh");
     QPushButton *button = new QPushButton(tr("Export"));
+    QPushButton *impFts = new QPushButton(tr("Import"));
 
+    layout->addWidget(impFts);
     layout->addWidget(mLabel);
     layout->addWidget(button);
+
+    layout->addStretch();
+
+    connect(impFts, &QPushButton::clicked,[this](){
+        auto openPath = QFileDialog::getOpenFileName(0,"Import LandMarks");
+        if ( openPath.isEmpty()){
+            return;
+        }
+        QFile file(openPath);
+        if ( !file.open(QIODevice::ReadOnly)){
+            return;
+        }
+
+        QTextStream in(&file);
+        while (!in.atEnd()){
+            auto line = in.readLine();
+            mPoints.insert(line.toUInt());
+        }
+
+        emit glUpdateRequest();
+        file.close();
+    });
+
+    connect(button, &QPushButton::clicked,
+            [this](){
+        auto nPts = int(mPoints.size());
+        if ( 0 >= nPts ){
+            return;
+        }
+
+        auto savePath = QFileDialog::getSaveFileName(0,"Export LandMarks");
+        if ( savePath.isEmpty()){
+            return;
+        }
+        QFile file(savePath);
+        if (!file.open(QIODevice::WriteOnly)){
+            return;
+        }
+        auto end = mPoints.end();
+        QTextStream out(&file);
+        for ( auto i=mPoints.begin(); i!=end; ++i ){
+            out << *i << "\n";
+        }
+
+        file.close();
+    });
 
     mWidget->setLayout(layout);
     return mWidget.get();
@@ -89,7 +138,24 @@ bool LP_Pick_Feature_Points::eventFilter(QObject *watched, QEvent *event)
                                                     c->Mesh()->points()->data(),
                                                     c->Mesh()->n_vertices(),
                                                     e->pos(), true);
-                mPoints = std::move(tmp);
+                QSet<uint> tmp_(tmp.begin(), tmp.end());
+
+                qDebug() << "Picked : " << tmp_;
+                if (Qt::ControlModifier & e->modifiers()){
+                    mPoints.unite(tmp_);
+                }else if (Qt::ShiftModifier & e->modifiers()){
+                    qDebug() << "Subtract : " << tmp_;
+                    mPoints.subtract(tmp_);
+                }else{
+                    mPoints = std::move(tmp_);
+                }
+
+                QString info(mObject.lock()->Uuid().toString());
+                for ( auto &p : mPoints ){
+                    info += tr("%1\n").arg(p);
+                }
+                mLabel->setText(info);
+
                 if (!mPoints.empty()){
 //                    QStringList pList;
 //                    int id=0;
@@ -157,8 +223,9 @@ void LP_Pick_Feature_Points::FunctionalRender(QOpenGLContext *ctx, QSurface *sur
     if ( !mPoints.empty()){                         //If some vertices are picked and record in mPoints
         mProgram->setUniformValue("f_pointSize", 13.0f);    //Enlarge the point-size
         mProgram->setUniformValue("v4_color", QVector4D( 0.1f, 0.6f, 0.1f, 1.0f )); //Change to another color
+        std::vector<uint> list(mPoints.begin(), mPoints.end());
         // ONLY draw the picked vertices again
-        f->glDrawElements(GL_POINTS, GLsizei(mPoints.size()), GL_UNSIGNED_INT, mPoints.data());
+        f->glDrawElements(GL_POINTS, GLsizei(mPoints.size()), GL_UNSIGNED_INT, list.data());
     }
     mProgram->disableAttributeArray("a_pos");   //Disable the "a_pos" buffer
 
