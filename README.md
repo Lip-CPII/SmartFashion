@@ -29,7 +29,8 @@ sudo apt-get update
 sudo apt-get install build-essential
 ```
 
-It is suggested to installed the ffmpeg package for video-IO.
+It is suggested to installed the ffmpeg package for video-IO. 
+_The pre-built OpenCV uses the Ubuntu 20's ffmpeg libraries, Ubuntu 18 users may see link errors when build_
 
 ```console
 sudo apt-get install libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libx264-dev libavresample-dev -Y
