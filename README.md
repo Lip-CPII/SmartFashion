@@ -14,7 +14,7 @@ _(For **Linux**) If Qt official server is too slow or connection problem exist, 
 
 **_It is recommanded to use QtCreator as the IDE._**
 
-- OpenCV 4.5 or newer (Prebuilt [Ubuntu 20](https://ext.bravedbrothers.com/OpenCV_ubuntu.tar.gz) / Prebuilt [Ubuntu 18](https://ext.bravedbrothers.com/OpenCV_ubuntu18.tar.gz) / [Windows10](https://ext.bravedbrothers.com/OpenCV.7z))
+- OpenCV 4.5 or newer (Prebuilt [Ubuntu 20](https://ext.bravedbrothers.com/OpenCV_ubuntu.tar.gz) / [Ubuntu 18](https://ext.bravedbrothers.com/OpenCV_ubuntu18.tar.gz) / [Windows10](https://ext.bravedbrothers.com/OpenCV.7z))
 - OpenMesh 9 or newer (Prebuilt [Ubuntu 20](https://ext.bravedbrothers.com/OpenMesh_ubuntu.tar.gz) / [Ubuntu 18](https://ext.bravedbrothers.com/OpenMesh_ubuntu18.tar.gz) / [Windows10](https://ext.bravedbrothers.com/OpenMesh.7z))
 
 #### _Windows_
