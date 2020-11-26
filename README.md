@@ -14,7 +14,7 @@ _(For **Linux**) If Qt official server is too slow or connection problem exist, 
 
 **_It is recommanded to use QtCreator as the IDE._**
 
-- OpenCV 4.5 or newer (Prebuilt [Ubuntu 20](https://ext.bravedbrothers.com/OpenCV_ubuntu.tar.gz) / [Windows10](https://ext.bravedbrothers.com/OpenCV.7z))
+- OpenCV 4.5 or newer (Prebuilt [Ubuntu 20](https://ext.bravedbrothers.com/OpenCV_ubuntu.tar.gz) / Prebuilt [Ubuntu 18](https://ext.bravedbrothers.com/OpenCV_ubuntu18.tar.gz) / [Windows10](https://ext.bravedbrothers.com/OpenCV.7z))
 - OpenMesh 9 or newer (Prebuilt [Ubuntu 20](https://ext.bravedbrothers.com/OpenMesh_ubuntu.tar.gz) / [Windows10](https://ext.bravedbrothers.com/OpenMesh.7z))
 
 #### _Windows_
@@ -30,7 +30,7 @@ sudo apt-get install build-essential
 ```
 
 It is suggested to installed the ffmpeg package for video-IO. 
-_The pre-built OpenCV uses the Ubuntu 20's ffmpeg libraries, Ubuntu 18 users may see link errors when build_
+_The Ubuntu 20 pre-built OpenCV uses the Ubuntu 20's ffmpeg libraries, Ubuntu 18 should use the pre-built for Ubuntu 18 else link errors may exist during build_
 
 ```console
 sudo apt-get install libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libx264-dev libavresample-dev -Y
