@@ -23,10 +23,21 @@ MSVC 142 (2019) is required which can be downloaded and use for free with the [C
 
 #### _Ubuntu_
 
-GCC and some system dependencies have to be installed with the following commands.
+Assume Git is installed. Or you may install Git by
 ```console
-sudo apt-get update
-sudo apt-get install build-essential mesa-common-dev libgles2-mesa-dev -y
+sudo apt-get install git
+```
+
+Get the repository by typing in the following command
+```console
+git clone https://github.com/Lip-CPII/SmartFashion.git
+```
+
+Then
+```
+cd SmartFashion
+bash ./configure_18.sh  //If you are using Ubuntu 18
+bash ./configure_20.sh  //If you are using Ubuntu 20
 ```
 
 It is suggested to installed the ffmpeg package for video-IO. 
@@ -36,7 +47,7 @@ _The Ubuntu 20 pre-built OpenCV uses the Ubuntu 20's ffmpeg libraries, Ubuntu 18
 sudo apt-get install libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libx264-dev libavresample-dev -Y
 ```
 
-If pre-builts are used, unzip the files after download. E.g. in Linux
+If pre-builts are downloaded explicitly, unzip the files after download. E.g. in Linux
 ```console
 tar -xzvf OpenCV_ubuntu.tar.gz
 mv OpenCV_ubuntu OpenCV
