@@ -14,8 +14,8 @@ _(For **Linux**) If Qt official server is too slow or connection problem exist, 
 
 **_It is recommanded to use QtCreator as the IDE._**
 
-- OpenCV 4.5 or newer (Prebuilt [Ubuntu 20](https://ext.bravedbrothers.com/OpenCV_ubuntu.tar.gz) / [Windows10](https://ext.bravedbrothers.com/OpenCV.7z))
-- OpenMesh 9 or newer (Prebuilt [Ubuntu 20](https://ext.bravedbrothers.com/OpenMesh_ubuntu.tar.gz) / [Windows10](https://ext.bravedbrothers.com/OpenMesh.7z))
+- OpenCV 4.5 or newer (Prebuilt [Ubuntu 20](https://ext.bravedbrothers.com/OpenCV_ubuntu.tar.gz) / [Ubuntu 18](https://ext.bravedbrothers.com/OpenCV_ubuntu18.tar.gz) / [Windows10](https://ext.bravedbrothers.com/OpenCV.7z))
+- OpenMesh 9 or newer (Prebuilt [Ubuntu 20](https://ext.bravedbrothers.com/OpenMesh_ubuntu.tar.gz) / [Ubuntu 18](https://ext.bravedbrothers.com/OpenMesh_ubuntu18.tar.gz) / [Windows10](https://ext.bravedbrothers.com/OpenMesh.7z))
 
 #### _Windows_
 
@@ -23,19 +23,31 @@ MSVC 142 (2019) is required which can be downloaded and use for free with the [C
 
 #### _Ubuntu_
 
-GCC has to be installed with the following commands.
+Assume Git is installed. Or you may install Git by
 ```console
-sudo apt-get update
-sudo apt-get install build-essential
+sudo apt-get install git
 ```
 
-It is suggested to installed the ffmpeg package for video-IO.
+Get the repository by typing in the following command
+```console
+git clone https://github.com/Lip-CPII/SmartFashion.git
+```
+
+Then
+```
+cd SmartFashion
+bash ./configure_18.sh  //If you are using Ubuntu 18
+bash ./configure_20.sh  //If you are using Ubuntu 20
+```
+
+It is suggested to installed the ffmpeg package for video-IO. 
+_The Ubuntu 20 pre-built OpenCV uses the Ubuntu 20's ffmpeg libraries, Ubuntu 18 should use the pre-built for Ubuntu 18 else link errors may exist during build_
 
 ```console
 sudo apt-get install libavcodec-dev libavformat-dev libavutil-dev libswscale-dev libx264-dev libavresample-dev -Y
 ```
 
-If pre-builts are used, unzip the files after download. E.g. in Linux
+If pre-builts are downloaded explicitly, unzip the files after download. E.g. in Linux
 ```console
 tar -xzvf OpenCV_ubuntu.tar.gz
 mv OpenCV_ubuntu OpenCV
