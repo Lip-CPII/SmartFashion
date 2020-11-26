@@ -840,7 +840,7 @@ bool LP_YOLO_Helper::eventFilter(QObject *watched, QEvent *event)
             mCurrentBoundingBox.second = QVector2D(e->pos().x(), h - e->pos().y());
             emit glUpdateRequest();
             return true;
-        }else if ((Qt::MidButton | Qt::RightButton) & e->buttons() &&
+        }else if ((Qt::MiddleButton | Qt::RightButton) & e->buttons() &&
                   Qt::ControlModifier != e->modifiers()){
             return true;
         }

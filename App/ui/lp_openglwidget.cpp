@@ -233,7 +233,7 @@ void LP_OpenGLWidget::mouseMoveEvent(QMouseEvent *e)
 
      QMatrix4x4 mv(pCam->ViewMatrix());//, proj(pCam->ProjectionMatrix());
 
-     if ((Qt::MidButton | Qt::RightButton) & e->buttons()){
+     if ((Qt::MiddleButton | Qt::RightButton) & e->buttons()){
          QPoint pos  = e->pos();
          if ( Qt::ControlModifier == e->modifiers()){//Pan
              float   hw   = 0.5*w,

@@ -147,7 +147,7 @@ QWidget *LP_Plugin_PIFuHD::DockUi()
             qDebug() << "Process completed";
         });
 #else
-        label->setText("Operation is currently supported in Windows only.";
+        label->setText("Operation is currently supported in Windows only.");
 #endif
     });
 

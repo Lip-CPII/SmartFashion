@@ -61,6 +61,7 @@ else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../OpenCV/install/de
 unix:!macx: LIBS += -L$$PWD/../../OpenCV/install/lib/  \
     -lopencv_core \
     -lopencv_videoio \
-    -lopencv_imgproc
+    -lopencv_imgproc \
+    -lopencv_imgcodecs
 
 unix:!macx: LIBS += -L$$PWD/../../OpenMesh/lib/ -lOpenMeshCore
