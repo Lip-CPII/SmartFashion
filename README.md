@@ -23,10 +23,10 @@ MSVC 142 (2019) is required which can be downloaded and use for free with the [C
 
 #### _Ubuntu_
 
-GCC has to be installed with the following commands.
+GCC and some system dependencies have to be installed with the following commands.
 ```console
 sudo apt-get update
-sudo apt-get install build-essential
+sudo apt-get install build-essential mesa-common-dev libgles2-mesa-dev -y
 ```
 
 It is suggested to installed the ffmpeg package for video-IO. 
