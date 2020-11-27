@@ -487,11 +487,11 @@ bool CMesh::loadM(const char* sFileName)
         }
     }
     fin.close();
-    //根据包围盒将物体中心移至原点，同时进行归一化
+
     vector = vMax - vMin;
-    double d = __max(vector.x, vector.y);
-    d = 0.5*__max(d, vector.z);
-    vector = 0.5*(vMax + vMin);//偏移量
+    double d = std::max(vector.x, vector.y);
+    d = 0.5*std::max(d, vector.z);
+    vector = 0.5*(vMax + vMin);
     scaleD = d;
     origin = vector;
 
@@ -551,7 +551,8 @@ bool CMesh::loadFromSMF(std::list<Vector3D> &VertexList, std::list<UINT> &FaceLi
     if (m_pFace == NULL) { clear(); return false; }//out of memory
     m_pAngles = new double[m_nVertexCapacity];
     if (!m_pAngles) { clear(); return false; }
-    memset(m_pAngles, 0, sizeof(double) * m_nVertexCapacity);
+    std::fill(m_pAngles, m_pAngles + sizeof(double) * m_nVertexCapacity,
+              0);
 
     UINT i;
     _VECTORLIST::iterator iVertex = VertexList.begin();
@@ -691,8 +692,8 @@ bool CMesh::saveToSMF(const char* sFileName)
 
 bool CMesh::reConstruct()
 {
-    _VECTORLIST VertexList;//ʱ洢е
-    _UINTLIST FaceList;//ʱ洢ĵϢ
+    _VECTORLIST VertexList;//
+    _UINTLIST FaceList;//
 
     Vector3D vector;
     Vector3D vMin;
@@ -728,7 +729,7 @@ bool CMesh::reConstruct()
     if (m_pFace == NULL) { clear(); return false; }//out of memory
     m_pAngles = new double[m_nVertexCapacity];
     if (!m_pAngles) { clear(); return false; }
-    memset(m_pAngles, 0, sizeof(double) * m_nVertexCapacity);
+    std::fill(m_pAngles, m_pAngles + sizeof(double) * m_nVertexCapacity, 0);
 
     _VECTORLIST::iterator iVertex = VertexList.begin();
     _UINTLIST::iterator iFace = FaceList.begin();
