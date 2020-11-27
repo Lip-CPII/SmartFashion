@@ -10,6 +10,7 @@
 #include <QOpenGLFramebufferObject>
 #include <QOpenGLExtraFunctions>
 #include <QOpenGLShaderProgram>
+#include <QtConcurrent/QtConcurrent>
 
 std::unique_ptr<LP_GLSelector> g_GLSelector = std::make_unique<LP_GLSelector>();
 
@@ -23,17 +24,21 @@ LP_GLSelector::LP_GLSelector()
 
 std::vector<QVector3D> LP_GLSelector::gen24ColorVector(const int &limit)
 {
-    float denom = 1.0f/255.0f;
     std::vector<QVector3D> _c(limit);
-    int i;
-
-#pragma omp parallel for schedule(static,524288)
-    for (i=0; i<limit; ++i ){
-        auto &c = _c[i];
+    auto watcher = new QFutureWatcher<void>;
+    connect(watcher,&QFutureWatcher<void>::finished,
+            [watcher](){
+        watcher->deleteLater();
+    });
+    auto future = QtConcurrent::map(_c,std::bind([]( QVector3D &c, QVector3D *base){
+        constexpr float denom = 1.0f/255.0f;
+        const auto i = &c - base;
         c.setX(((i & 0x000000FF) >>  0)*denom);
         c.setY(((i & 0x0000FF00) >>  8)*denom);
         c.setZ(((i & 0x00FF0000) >>  16)*denom);
-    }
+    }, std::placeholders::_1, _c.data()));
+
+    watcher->setFuture(future);
     return _c;
 }
 

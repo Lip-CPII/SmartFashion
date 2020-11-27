@@ -1,14 +1,17 @@
-QT += gui widgets
+QT += gui widgets concurrent
 
 TEMPLATE = lib
-DEFINES += FUNCTIONAL_LIBRARY _USE_MATH_DEFINES
+DEFINES += FUNCTIONAL_LIBRARY _USE_MATH_DEFINES _OPENMP
 
 CONFIG += c++17
 
 unix {
 QMAKE_CXXFLAGS += -fopenmp
 QMAKE_LFLAGS += -fopenmp
+LIBS += -fopenmp
 }
+
+QMAKE_CXXFLAGS += -openmp
 
 
 # You can make your code fail to compile if it uses deprecated APIs.
@@ -27,7 +30,11 @@ SOURCES += \
     Functionals/lp_import_openmesh.cpp \
     Functionals/lp_new.cpp \
     Functionals/lp_pick_feature_points.cpp \
+    Functionals/lp_surfnet.cpp \
     Functionals/lp_yolo_helper.cpp \
+    extern/Geometry.cpp \
+    extern/LBO.cpp \
+    extern/Mesh.cpp \
     plugin/lp_actionplugin.cpp \
     renderer/lp_glrenderer.cpp \
     renderer/lp_glselector.cpp
@@ -46,8 +53,12 @@ HEADERS += \
     Functionals/lp_import_openmesh.h \
     Functionals/lp_new.h \
     Functionals/lp_pick_feature_points.h \
+    Functionals/lp_surfnet.h \
     Functionals/lp_yolo_helper.h \
     LP_Registry.h \
+    extern/Geometry.h \
+    extern/LBO.h \
+    extern/Mesh.h \
     plugin/lp_actionplugin.h \
     renderer/lp_glrenderer.h \
     renderer/lp_glselector.h

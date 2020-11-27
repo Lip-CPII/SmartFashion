@@ -11,6 +11,7 @@
 #include <QOpenGLContext>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLExtraFunctions>
+#include <QOpenGLFramebufferObject>
 #include <QLabel>
 #include <QMatrix4x4>
 #include <QPushButton>
@@ -146,7 +147,6 @@ bool LP_Pick_Feature_Points::eventFilter(QObject *watched, QEvent *event)
         }
         return LP_OpenMeshw() = std::static_pointer_cast<LP_OpenMeshImpl>(obj.lock());
     };
-
 
     if ( QEvent::MouseButtonRelease == event->type()){
         auto e = static_cast<QMouseEvent*>(event);

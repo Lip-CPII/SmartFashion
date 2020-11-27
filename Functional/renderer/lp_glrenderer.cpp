@@ -153,7 +153,7 @@ void LP_GLRenderer::updateGL()
 
     dLock.unlock();
 
-    emit postRender(mContext, mSurface.get(), mFBO, mCam, QVariant());
+    emit postRender(mContext, mSurface.get(), mFBO, mCam, QVariant(objectName()));
 
     f->glDisable( GL_DEPTH_TEST );
     mFBO->release();

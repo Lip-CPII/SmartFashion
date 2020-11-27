@@ -80,7 +80,7 @@ QWidget *LP_YOLO_Helper::DockUi()
     layout->addWidget(mLabel);
 
     mClasses = new QComboBox(mWidget.get());
-    QStringList items{"0","1","2","3"};     //Classnames
+    QStringList items{"0","1","2","3","4","5","6"};     //Classnames
 
     mClasses->addItems(items);
     layout->addWidget(mClasses);
@@ -249,7 +249,7 @@ QWidget *LP_YOLO_Helper::DockUi()
     });
 
     connect(_spreadData, &QPushButton::clicked,
-            [this](){
+            [](){
         auto folders = QFileDialog::getExistingDirectory(0,"Select folder");
         if ( folders.isEmpty()){
             return;
@@ -275,7 +275,18 @@ QWidget *LP_YOLO_Helper::DockUi()
         qDebug() << subFolders;
 
         uint nfiles = 0;
-        const uint nStep = 5;   //Every nStep files becomes the eval.
+
+        int nLeastSamples = std::numeric_limits<int>::max();
+        int nMaxSamples = std::numeric_limits<int>::min();
+        for ( auto &sub : subFolders ){
+            const auto subImagePath = imageFolders.path() + "/" + sub + "/";
+            QDir sub_dir(subImagePath);
+            auto files = sub_dir.entryList(QDir::Files | QDir::NoSymLinks, QDir::Time);
+            nLeastSamples = std::min( nLeastSamples, files.size());
+            nMaxSamples = std::max( nMaxSamples, files.size());
+        }
+
+        const float deltaSamples = nMaxSamples - nLeastSamples;
 
         const auto newTrainImagePath = newFolders.path() + "/train/images/";
         const auto newTrainLabelsPath = newFolders.path() + "/train/labels/";
@@ -285,8 +296,17 @@ QWidget *LP_YOLO_Helper::DockUi()
         for ( auto &sub : subFolders ){
             const auto subImagePath = imageFolders.path() + "/" + sub + "/";
             const auto subLabelPath = folders_dir.path() + "/labels/" + sub + "/";
+
             QDir sub_dir(subImagePath);
             auto files = sub_dir.entryList(QDir::Files | QDir::NoSymLinks, QDir::Time);
+            float t = (files.size()-nLeastSamples)/deltaSamples;
+            int nStep = 2*t + 5*(1.f-t);   //Every nStep files becomes the eval.
+            qDebug() << nStep << " " << subImagePath;
+            int nExtra = std::numeric_limits<int>::max();
+            if ( files.size() > 200 ){
+                nExtra = 3;
+                nStep = 2;
+            }
 
             newFolders.mkpath("train/images/"+sub);
             newFolders.mkpath("train/labels/"+sub);
@@ -300,7 +320,7 @@ QWidget *LP_YOLO_Helper::DockUi()
 
             for ( auto &file : files ){
                 QFileInfo info(file);
-                if ( 0 == nfiles % nStep ){//Copy to eval
+                if ( 0 == nfiles % nStep || 0 == nfiles % nExtra ){//Copy to eval
                     if ( !QFile::copy(subImagePath + file,
                                       newSubEvalImagePath + file)){
                         qDebug() << "Copy image failed : " << subImagePath + file + " -> " +
@@ -443,7 +463,7 @@ QWidget *LP_YOLO_Helper::DockUi()
             mCVCam->read(frame);
             mLock.unlock();
 
-            const int skipFrames = 15;
+            const int skipFrames = 60;
             while (!frame.empty()){
                 mLock.lockForWrite();
                 if ( mPause ){
