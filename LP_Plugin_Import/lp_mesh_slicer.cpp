@@ -18,6 +18,8 @@
 #include <QLabel>
 #include <QMatrix4x4>
 #include <QPushButton>
+#include <QFileDialog>
+#include <QMessageBox>
 #include <QtConcurrent/QtConcurrent>
 
 typedef MeshPlaneIntersect<float, int> Intersector;
@@ -50,6 +52,8 @@ QWidget *LP_Mesh_Slicer::DockUi()
     QDoubleSpinBox *dxspin = new QDoubleSpinBox;
     QPushButton *button = new QPushButton("Slice all");
 
+    QPushButton *exportLoop = new QPushButton("Export Loop");   //Export Loop button
+
     dxspin->setRange(0,90);
     dxspin->setValue(0);
 
@@ -60,6 +64,7 @@ QWidget *LP_Mesh_Slicer::DockUi()
     layout->addWidget(dxspin);
     layout->addWidget(slider);
     layout->addWidget(button);
+    layout->addWidget(exportLoop);
 
     widget->setLayout(layout);
 
@@ -84,6 +89,46 @@ QWidget *LP_Mesh_Slicer::DockUi()
             for ( auto i=min; i<max; i+=step){
                 slider->setValue(i);
             }
+        });
+    });
+
+    //Export all the loops to a .txt file
+    connect(exportLoop, &QPushButton::clicked,
+            this, [this](bool clicked){
+        Q_UNUSED(clicked)
+        if ( mPaths.empty()){
+            QMessageBox::information(0,"Information","No path to export.");
+            return;
+        }
+        auto filename = QFileDialog::getSaveFileName(0,"Save Loops","",tr("Text (*.txt)"));
+        if ( filename.isEmpty()){   //If the user cancelled
+            return;
+        }
+        auto future = QtConcurrent::run(&mPool,[this,filename](){
+            //Ask user to provide a filename for saving the paths
+            QFile file(filename);   //Get a file handler
+            if ( !file.open(QIODevice::WriteOnly)){  //Open the file to write failed
+                qDebug() << "Fail to open file: " << filename;
+                return;
+            }
+            QString data;
+            int loopCount = 0;
+            for ( auto &layer : mPaths ){//For every "path" in "mPaths"
+                int nLoops = layer.size();
+
+                for ( int i=0; i<nLoops; ++i ){ //For all loops in that layer
+                    data += tr("Loop %1\n").arg(loopCount++);   //Save the layer info.
+
+                    auto &loop = layer.at(i);
+                    for ( auto &v : loop ){ //For a loop in that layer
+                        data += tr("%1 %2 %3\n").arg(v.x()).arg(v.y()).arg(v.z());  //Save the point x,y,z coordinates
+                    }
+                }
+            }
+            QTextStream out(&file); //Create a text-stream for writing data into the file
+            out << data;        //Push the data into the file
+
+            file.close();   //Close the file
         });
     });
 

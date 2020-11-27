@@ -99,12 +99,12 @@ void LP_OpenMeshImpl::Draw(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebuff
                         (void*)(mStrides[0]*sizeof(uint)));
 
     if ( option.toString() != "Normal"){
-//        mProgramBoundary->setUniformValue("u_color", QVector3D(0.2,0.2,0.2));
-//        f->glLineWidth(0.5f);
-//        f->glDrawElements(  GL_LINES,
-//                            GLsizei(mStrides[2]-mStrides[1]),
-//                            GL_UNSIGNED_INT,
-//                            (void*)(mStrides[1]*sizeof(uint)));
+        mProgramBoundary->setUniformValue("u_color", QVector3D(0.2,0.2,0.2));
+        f->glLineWidth(0.5f);
+        f->glDrawElements(  GL_LINES,
+                            GLsizei(mStrides[2]-mStrides[1]),
+                            GL_UNSIGNED_INT,
+                            (void*)(mStrides[1]*sizeof(uint)));
     }
 
     mProgramBoundary->disableAttributeArray("a_pos");
@@ -172,7 +172,7 @@ bool LP_OpenMeshImpl::DrawSetup(QOpenGLContext *ctx, QSurface *surf, QVariant &o
                 "   float Ks = pow( Kd, 80.0 );\n"
                 "   vec3 spec = Ks * vec3(0.5, 0.5, 0.5);\n"
                 "   color += spec;\n"
-                "   gl_FragColor = vec4(ambi,1.0);\n"
+                "   gl_FragColor = vec4(color,1.0);\n"
                 "}";
     }
 
