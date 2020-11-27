@@ -1,7 +1,7 @@
 QT += gui widgets concurrent
 
 TEMPLATE = lib
-DEFINES += FUNCTIONAL_LIBRARY _USE_MATH_DEFINES _OPENMP
+DEFINES += FUNCTIONAL_LIBRARY _USE_MATH_DEFINES
 
 CONFIG += c++17
 
@@ -10,8 +10,6 @@ QMAKE_CXXFLAGS += -fopenmp
 QMAKE_LFLAGS += -fopenmp
 LIBS += -fopenmp
 }
-
-QMAKE_CXXFLAGS += -openmp
 
 
 # You can make your code fail to compile if it uses deprecated APIs.
