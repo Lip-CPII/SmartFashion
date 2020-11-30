@@ -56,12 +56,27 @@ QWidget *LP_SURFNet::DockUi()
                     return;
                 }
                 mVx.resize(mMeshX->m_nVertex);
+                mNx.resize(mMeshX->m_nVertex);
                 for ( uint i=0; i<mMeshX->m_nVertex; ++i ){
                     auto *p = &mMeshX->m_pVertex[i].m_vPosition;
                     mVx[i].setX(p->x);
                     mVx[i].setY(p->y);
                     mVx[i].setZ(p->z);
+                    p = &mMeshX->m_pVertex[i].m_vNormal;
+                    mNx[i].setX(p->x);
+                    mNx[i].setY(p->y);
+                    mNx[i].setZ(p->z);
                 }
+
+                mIx.clear();
+                for ( uint i=0; i<mMeshX->m_nFace; ++i ){
+                    auto pF = mMeshX->m_pFace[i];
+                    for ( auto j=0; j<pF.m_nType; ++j ){
+                        mIx.emplace_back(pF.m_piVertex[j]);
+                    }
+                }
+                qDebug() << "Indix size : " << mIx.size() << " Vertex: " << mVx.size()
+                         << " face : " << mMeshX->m_nFace;
 
                 mMeshY = std::make_shared<CMesh>();
                 if (!mMeshY->Load(fileY.toUtf8())){
@@ -70,12 +85,28 @@ QWidget *LP_SURFNet::DockUi()
                     return;
                 }
                 mVy.resize(mMeshY->m_nVertex);
+                mNy.resize(mMeshY->m_nVertex);
                 for ( uint i=0; i<mMeshY->m_nVertex; ++i ){
                     auto *p = &mMeshY->m_pVertex[i].m_vPosition;
                     mVy[i].setX(p->x);
                     mVy[i].setY(p->y);
                     mVy[i].setZ(p->z);
+                    p = &mMeshY->m_pVertex[i].m_vNormal;
+                    mNy[i].setX(p->x);
+                    mNy[i].setY(p->y);
+                    mNy[i].setZ(p->z);
                 }
+
+                mIy.clear();
+                for ( uint i=0; i<mMeshY->m_nFace; ++i ){
+                    auto pF = mMeshY->m_pFace[i];
+                    for ( auto j=0; j<pF.m_nType; ++j ){
+                        mIy.emplace_back(pF.m_piVertex[j]);
+                    }
+                }
+                qDebug() << "Indix size : " << mIy.size() << " Vertex: " << mVy.size()
+                         << " face : " << mMeshY->m_nFace;
+
                 LBO lboX, lboY;
                 lboX.AssignMesh(mMeshX.get());
                 lboX.Construct();
@@ -144,16 +175,28 @@ bool LP_SURFNet::eventFilter(QObject *watched, QEvent *event)
         }
         f.close();
 
+//        std::transform(p.begin(), p.end(), p.begin(), [base=p.data(),&A](const double &v){
+//            return v / A[&v - base];
+//        });
         p[vid] *= A[vid];
 
-        auto max = *std::max_element(p.begin(), p.end());
-        auto min = *std::min_element(p.begin(), p.end());
-        auto delta = max - min;
-        qDebug() << "Delta of P : " << delta;
+        double sum = 0.0;
+        for ( auto &v : p ){
+            sum += v*v;
+        }
+        sum = 1.0/std::sqrt(sum);
+        std::transform(p.begin(), p.end(), p.begin(), [&sum](const double &v){
+            return v * sum;
+        });
+
+        auto mm = std::minmax_element(p.begin(), p.end());
+        auto delta = *mm.second - *mm.first;
+        qDebug() << "Delta of P : " << delta << ", [" << mm.second - p.begin()
+                 << ", " << mm.first - p.begin() << "]";
         delta = 1.0/delta;
         //Normalize
-        std::transform(p.begin(), p.end(), p.begin(), [delta](const double &v){
-            return v * delta;
+        std::transform(p.begin(), p.end(), p.begin(), [delta,min=mm.first](const double &v){
+            return (v - *min) * delta;
         });
         mP = std::move(p);
     };
@@ -215,14 +258,22 @@ void LP_SURFNet::FunctionalRender(QOpenGLContext *ctx, QSurface *surf, QOpenGLFr
 
     mProgram->bind();                       //Bind the member shader to the context
     mProgram->setUniformValue("m4_mvp", proj * view );  //Set the Model-View-Projection matrix
+    mProgram->setUniformValue("m4_view",view);
+    mProgram->setUniformValue("m3_normal", view.normalMatrix());
     mProgram->setUniformValue("f_pointSize", 7.0f);     //Set the point-size which is enabled before
-    mProgram->setUniformValue("v4_color", QVector4D( 0.7f, 1.0f, 0.2f, 0.6f )); //Set the point color
+    mProgram->setUniformValue("v4_color", QVector4D( 0.5f, 0.8f, 0.1f, 0.6f )); //Set the point color
 
 
     mProgram->enableAttributeArray("a_pos");        //Enable the "a_pos" attribute buffer of the shader
-    mProgram->setAttributeArray("a_pos",mVx.data()); //Set the buffer data of "a_pos"
-    f->glDrawArrays(GL_POINTS, 0, GLsizei(mVx.size()));    //Actually draw all the points
+    mProgram->enableAttributeArray("a_norm");
 
+    mProgram->setAttributeArray("a_pos",mVx.data()); //Set the buffer data of "a_pos"
+    mProgram->setAttributeArray("a_norm", mNx.data());
+
+    f->glDrawElements(GL_TRIANGLES, mIx.size(),
+                      GL_UNSIGNED_INT, mIx.data());
+
+    QString compare = "Selected id:";
     if ( !mPoints.empty()){                         //If some vertices are picked and record in mPoints
         mProgram->setUniformValue("f_pointSize", 13.0f);    //Enlarge the point-size
         mProgram->setUniformValue("v4_color", QVector4D( 0.1f, 0.6f, 0.1f, 1.0f )); //Change to another color
@@ -230,9 +281,11 @@ void LP_SURFNet::FunctionalRender(QOpenGLContext *ctx, QSurface *surf, QOpenGLFr
         std::vector<uint> list(mPoints.size());
         for ( size_t i = 0; i<list.size(); ++i ){
             list[i] = (mPoints.begin()+i).key();
+            compare += tr("%1 ").arg(list[i]);
         }
         // ONLY draw the picked vertices again
         f->glDrawElements(GL_POINTS, GLsizei(mPoints.size()), GL_UNSIGNED_INT, list.data());
+
     }
 
     view.translate(QVector3D(1.5f,0.0f,0.0f));
@@ -240,20 +293,41 @@ void LP_SURFNet::FunctionalRender(QOpenGLContext *ctx, QSurface *surf, QOpenGLFr
     mProgram->setUniformValue("f_pointSize", 3.5f);    //Enlarge the point-size
     mProgram->setUniformValue("v4_color", QVector4D( 0.5f, 0.5f, 0.5f, 0.6f )); //Set the point color
     mProgram->setAttributeArray("a_pos",mVy.data()); //Set the buffer data of "a_pos"
-    f->glDrawArrays(GL_POINTS, 0, GLsizei(mVy.size()));    //Actually draw all the points
+    mProgram->setAttributeArray("a_norm",mNy.data()); //Set the buffer data of "a_pos"
 
+    //f->glDrawArrays(GL_POINTS, 0, GLsizei(mVy.size()));    //Actually draw all the points
+    f->glDrawElements(GL_TRIANGLES, mIy.size(),
+                      GL_UNSIGNED_INT, mIy.data());
+
+    compare += tr(" %1 ").arg("Correspondence : ");
     auto nps = mP.size();
     if ( nps ){
+        mProgram->setUniformValue("f_pointSize", 15.0f);    //Enlarge the point-size
+
+        auto minmax = std::minmax_element(mP.begin(),mP.end());
+        auto minId = minmax.first - mP.begin();
+        auto maxId = minmax.second - mP.begin();
+
+        compare += tr("min:%1 max:%2").arg(minId).arg(maxId);
+
+        mProgram->setUniformValue("v4_color", QVector4D( 0.0f, 0.0f, 0.0f, 1.0f )); //Set the point color
+        f->glDrawArrays(GL_POINTS, minId, 1);    //Actually draw all the points
+
+        mProgram->setUniformValue("v4_color", QVector4D( 1.0f, 0.0f, 0.0f, 1.0f )); //Set the point color
+        f->glDrawArrays(GL_POINTS, maxId, 1);    //Actually draw all the points
+
         mProgram->setUniformValue("f_pointSize", 5.0f);    //Enlarge the point-size
+
         for ( size_t i=0; i < nps; ++i ){
-            mProgram->setUniformValue("v4_color", QVector4D( mP[i], 0.5f, 0.5f, 1.0f )); //Set the point color
+            mProgram->setUniformValue("v4_color", QVector4D( mP[i], 1.0-mP[i], 1.0-mP[i], 1.0f )); //Set the point color
             f->glDrawArrays(GL_POINTS, i, 1);    //Actually draw all the points
         }
     }
 
+    qDebug() << compare;
 
     mProgram->disableAttributeArray("a_pos");   //Disable the "a_pos" buffer
-
+    mProgram->disableAttributeArray("a_norm");
     mProgram->release();                        //Release the shader from the context
 
     fbo->release();
@@ -265,16 +339,37 @@ void LP_SURFNet::initializeGL()
 {
     constexpr char vsh[] =
             "attribute vec3 a_pos;\n"       //The position of a point in 3D that used in FunctionRender()
+            "attribute vec3 a_norm;\n"
             "uniform mat4 m4_mvp;\n"        //The Model-View-Matrix
+            "uniform mat4 m4_view;\n"
+            "uniform mat3 m3_normal;\n"
             "uniform float f_pointSize;\n"  //Point size determined in FunctionRender()
+            "varying vec3 normal;\n"
+            "varying vec3 pos;\n"
             "void main(){\n"
+            "   pos = vec3( m4_view * vec4(a_pos, 1.0));\n"
+            "   normal = m3_normal * a_norm;\n"
             "   gl_Position = m4_mvp * vec4(a_pos, 1.0);\n" //Output the OpenGL position
             "   gl_PointSize = f_pointSize;\n"
             "}";
     constexpr char fsh[] =
             "uniform vec4 v4_color;\n"       //Defined the point color variable that will be set in FunctionRender()
+            "varying vec3 pos;\n"
+            "varying vec3 normal;\n"
             "void main(){\n"
-            "   gl_FragColor = v4_color;\n" //Output the fragment color;
+            "   vec3 lightPos = vec3(0.0, 1000.0, 0.0);\n"
+            "   vec3 viewDir = normalize( - pos);\n"
+            "   vec3 lightDir = normalize(lightPos - pos);\n"
+            "   vec3 H = normalize(viewDir + lightDir);\n"
+            "   vec3 N = normalize(normal);\n"
+            "   vec3 ambi = v4_color;\n"
+            "   float Kd = max(dot(H, N), 0.0);\n"
+            "   vec3 diff = Kd * vec3(0.5, 0.5, 0.5);\n"
+            "   vec3 color = ambi + diff;\n"
+            "   float Ks = pow( Kd, 80.0 );\n"
+            "   vec3 spec = Ks * vec3(0.5, 0.5, 0.5);\n"
+            "   color += spec;\n"
+            "   gl_FragColor = vec4(color,1.0);\n"
             "}";
 
     auto prog = new QOpenGLShaderProgram;   //Intialize the Shader with the above GLSL codes

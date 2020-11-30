@@ -30,7 +30,8 @@ private:
     QThreadPool mPool;
     QOpenGLShaderProgram *mProgram = nullptr;
     std::shared_ptr<CMesh> mMeshX, mMeshY;
-    std::vector<QVector3D> mVx, mVy;
+    std::vector<QVector3D> mVx, mVy, mNx, mNy;
+    std::vector<uint>   mIx, mIy;
     std::shared_ptr<QWidget> mWidget;
     QMap<uint,uint> mPoints;
     QString mCorrPath;

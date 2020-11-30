@@ -51,7 +51,6 @@ QWidget *LP_Mesh_Slicer::DockUi()
     QSlider *slider = new QSlider(widget);
     QDoubleSpinBox *dxspin = new QDoubleSpinBox;
     QPushButton *button = new QPushButton("Slice all");
-
     QPushButton *exportLoop = new QPushButton("Export Loop");   //Export Loop button
 
     dxspin->setRange(0,90);
