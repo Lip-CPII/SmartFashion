@@ -171,8 +171,10 @@ bool LP_Mesh_Slicer::eventFilter(QObject *watched, QEvent *event)
                         QVector3D minB, maxB;
                         c->BoundingBox(minB, maxB);
 
-                        mRange[0] = minB.y();
-                        mRange[1] = maxB.y();
+//                        mRange[0] = minB.y();
+//                        mRange[1] = maxB.y();
+                        mRange[0] = minB.z();
+                        mRange[1] = maxB.z();
 
                         mObject = o;
                         mLabel->setText(mObject.lock()->Uuid().toString());
@@ -340,7 +342,8 @@ void LP_Mesh_Slicer::sliderValueChanged(int v)
             Intersector::Plane plane;
 
             plane.normal = { mNormal[0], mNormal[1], mNormal[2] };
-            plane.origin = { 0.0f, height, 0.0f };
+//            plane.origin = { 0.0f, height, 0.0f };
+            plane.origin = { 0.0f, 0.0f, height };
 
             auto result = mesh.Intersect(plane);
             // the result is a vector of Path3D objects, which are planar polylines
