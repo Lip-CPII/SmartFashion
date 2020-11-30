@@ -107,6 +107,14 @@ QWidget *LP_Mesh_Slicer::DockUi()
         //For @Issac 30-11-2020
         auto mesh = std::static_pointer_cast<LP_OpenMeshImpl>(mObject.lock());
         qDebug() << mesh->mFileName;
+        QFileInfo infoOriginal(filename);
+        QFileInfo info(mesh->mFileName);
+        qDebug() << info.baseName();
+
+        filename = tr("%1/%2.%3").arg(infoOriginal.dir().path())
+                .arg(info.baseName())
+                .arg(infoOriginal.suffix());
+        qDebug() << filename;
 
         auto future = QtConcurrent::run(&mPool,[this,filename](){
             //Ask user to provide a filename for saving the paths
@@ -169,6 +177,7 @@ bool LP_Mesh_Slicer::eventFilter(QObject *watched, QEvent *event)
         if ( e->button() == Qt::LeftButton ){
             if (!mObject.lock()){
                 auto &&objs = g_GLSelector->SelectInWorld("Shade",e->pos());
+
                 for ( auto &o : objs ){
                     auto c_ = _isMesh(o);
                     if ( auto c = c_.lock()){
@@ -197,6 +206,7 @@ bool LP_Mesh_Slicer::eventFilter(QObject *watched, QEvent *event)
                             }
                             *it++ = std::move(tmpF);
                         }
+
                         break;
                     }
                 }
