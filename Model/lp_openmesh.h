@@ -48,6 +48,9 @@ public:
 
     void _Dump(QDebug &debug) override;
 
+    //For @Issac 30-11-2020
+    QString mFileName;
+
 protected:
     explicit LP_OpenMeshImpl(LP_Object parent = nullptr);
 
@@ -61,6 +64,7 @@ private:
     QOpenGLBuffer *mIndices;
 
     size_t mStrides[3];
+
 };
 
 

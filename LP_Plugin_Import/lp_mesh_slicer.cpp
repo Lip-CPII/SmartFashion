@@ -103,6 +103,11 @@ QWidget *LP_Mesh_Slicer::DockUi()
         if ( filename.isEmpty()){   //If the user cancelled
             return;
         }
+
+        //For @Issac 30-11-2020
+        auto mesh = std::static_pointer_cast<LP_OpenMeshImpl>(mObject.lock());
+        qDebug() << mesh->mFileName;
+
         auto future = QtConcurrent::run(&mPool,[this,filename](){
             //Ask user to provide a filename for saving the paths
             QFile file(filename);   //Get a file handler

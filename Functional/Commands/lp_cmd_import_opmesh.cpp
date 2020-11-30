@@ -109,6 +109,10 @@ void LP_Cmd_Import_OpMesh::redo()
     objPtr->SetBoundingBox(  QVector3D(bbMin[0], bbMin[1], bbMin[2]),
                                 QVector3D(bbMax[0], bbMax[1], bbMax[2]));
 
+    //For @Issac 30-11-2020
+    objPtr->mFileName = mFile;
+
+
 //    mEnt_Mesh->setToolTip(mEnt_Mesh->toolTip()+"\n"+tooltip);
 
     //A must do step for reconstructing the history
