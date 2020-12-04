@@ -22,7 +22,7 @@ public:
 public slots:
 
     void FunctionalRender(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebufferObject *fbo, const LP_RendererCam &cam, const QVariant &options) override;
-
+    void PainterDraw(QWidget *glW) override;
 signals:
 
 private:
@@ -37,6 +37,8 @@ private:
     QString mCorrPath;
     std::vector<double> mAx;
     std::vector<double> mP;
+    QMap<uint,uint> mP2P;
+    std::weak_ptr<LP_RendererCamImpl> mCam;
     /**
      * @brief initializeGL initalize any OpenGL resource
      */

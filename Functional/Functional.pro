@@ -28,6 +28,7 @@ SOURCES += \
     Functionals/lp_import_openmesh.cpp \
     Functionals/lp_new.cpp \
     Functionals/lp_pick_feature_points.cpp \
+    Functionals/lp_pick_feature_points_off.cpp \
     Functionals/lp_surfnet.cpp \
     Functionals/lp_yolo_helper.cpp \
     extern/Geometry.cpp \
@@ -51,6 +52,7 @@ HEADERS += \
     Functionals/lp_import_openmesh.h \
     Functionals/lp_new.h \
     Functionals/lp_pick_feature_points.h \
+    Functionals/lp_pick_feature_points_off.h \
     Functionals/lp_surfnet.h \
     Functionals/lp_yolo_helper.h \
     LP_Registry.h \

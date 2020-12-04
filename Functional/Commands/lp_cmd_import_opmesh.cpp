@@ -1,7 +1,9 @@
 #include "lp_cmd_import_opmesh.h"
 #include "lp_document.h"
 
+#include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <OpenMesh/Core/IO/MeshIO.hh>
 
 
@@ -33,13 +35,14 @@ void LP_Cmd_Import_OpMesh::redo()
 
     OpenMesh::IO::Options opt_;
     opt_ += OpenMesh::IO::Options::VertexColor;
+    opt_ += OpenMesh::IO::Options::VertexTexCoord;
 
     MyMesh mesh_ = std::make_shared<OpMesh>();
 //    mesh_->request_face_normals();
 //    mesh_->request_face_colors();
     mesh_->request_vertex_normals();
     mesh_->request_vertex_colors();
-//    mesh_->request_vertex_texcoords2D();
+    mesh_->request_vertex_texcoords2D();
     bool rc = OpenMesh::IO::read_mesh(*mesh_.get(), mFile.toStdString(), opt_ );
 
 #ifdef TIMER_LOG
@@ -70,6 +73,22 @@ void LP_Cmd_Import_OpMesh::redo()
     else
       std::cout << "File provides vertex normals\n";
 
+    QString texPath;
+    if ( ! opt_.check( OpenMesh::IO::Options::VertexTexCoord )){
+        qDebug() << "No texture coordinates\n";
+    }else{
+        OpenMesh::MPropHandleT< std::map< int, std::string > > texProp;
+        auto rc = mesh_->get_property_handle(texProp, "TextureMapping");
+        if ( rc ){
+            qDebug() << "Property : " << texProp.idx();
+            auto prop = mesh_->property(texProp);
+            for (auto &i : prop ){
+                qDebug() << i.first << " - " << i.second.data();
+                QFileInfo info(mFile);
+                texPath = info.dir().path() + "/" + QString::fromStdString( i.second);
+            }
+        }
+    }
 #ifdef TIMER_LOG
     qDebug() << QString("Rebuild mesh info : %1 ms").arg(timer.nsecsElapsed() * 1e-6);
 #endif
@@ -90,8 +109,12 @@ void LP_Cmd_Import_OpMesh::redo()
       bbMax.maximize( OpenMesh::vector_cast<Vec3f>(mesh_->point(*vIt)));
     }
     if ( ! opt_.check( OpenMesh::IO::Options::VertexColor ) ){
+        OpMesh::Color vcolor(0,0,0);
+        if (! opt_.check( OpenMesh::IO::Options::VertexTexCoord )){
+            vcolor[0] = 112;vcolor[1] = 112;vcolor[2] = 112;
+        }
         for (vIt = mesh_->vertices_begin(); vIt!=vEnd; ++vIt){
-            mesh_->set_color(*vIt, OpMesh::Color(52, 52, 52));
+            mesh_->set_color(*vIt, vcolor);
         }
     }
     else
@@ -108,6 +131,8 @@ void LP_Cmd_Import_OpMesh::redo()
     objPtr->SetMesh(mesh_);
     objPtr->SetBoundingBox(  QVector3D(bbMin[0], bbMin[1], bbMin[2]),
                                 QVector3D(bbMax[0], bbMax[1], bbMax[2]));
+
+    objPtr->SetTexturePath( texPath );
 
     //For @Issac 30-11-2020
     objPtr->mFileName = mFile;

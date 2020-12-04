@@ -8,6 +8,7 @@
 LP_OpenMeshImpl::LP_OpenMeshImpl(LP_Object parent) : LP_GeometryImpl(parent)
   ,mVBO(nullptr)
   ,mIndices(nullptr)
+  ,mTexture(nullptr)
 {
 
 }
@@ -19,6 +20,7 @@ LP_OpenMeshImpl::~LP_OpenMeshImpl()
     Q_ASSERT(!mProgramBoundary);
     Q_ASSERT(!mVBO);
     Q_ASSERT(!mIndices);
+    Q_ASSERT(!mTexture);
 }
 
 MyMesh LP_OpenMeshImpl::Mesh() const
@@ -29,6 +31,16 @@ MyMesh LP_OpenMeshImpl::Mesh() const
 void LP_OpenMeshImpl::SetMesh(const MyMesh &mesh)
 {
     mMesh = mesh;
+}
+
+QString LP_OpenMeshImpl::TexturePath() const
+{
+    return mTexturePath;
+}
+
+void LP_OpenMeshImpl::SetTexturePath(const QString &texPath)
+{
+    mTexturePath = texPath;
 }
 
 void LP_OpenMeshImpl::_Dump(QDebug &debug)
@@ -59,17 +71,27 @@ void LP_OpenMeshImpl::Draw(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebuff
     prog->setUniformValue("m4_mvp", proj*view );
     prog->setUniformValue("m4_view", view );
     prog->setUniformValue("m3_normal", view.normalMatrix());
+    if ( mTexture ){
+        mTexture->bind();
+        prog->setUniformValue("u_tex",0);
+    }
     prog->enableAttributeArray("a_pos");
     prog->enableAttributeArray("a_norm");
     prog->enableAttributeArray("a_color");
+    prog->enableAttributeArray("a_tex");
 
     mVBO->bind();
     mIndices->bind();
-    prog->setAttributeBuffer("a_pos",GL_FLOAT, 0, 3, 36);
-    prog->setAttributeBuffer("a_norm",GL_FLOAT, 12, 3, 36);
-    prog->setAttributeBuffer("a_color",GL_FLOAT, 24, 3, 36);
+    prog->setAttributeBuffer("a_pos",GL_FLOAT, 0, 3, 44);
+    prog->setAttributeBuffer("a_norm",GL_FLOAT, 12, 3, 44);
+    prog->setAttributeBuffer("a_color",GL_FLOAT, 24, 3, 44);
+    prog->setAttributeBuffer("a_tex",GL_FLOAT, 36, 2, 44);
 
     f->glDrawElements(GL_TRIANGLES, GLsizei(mStrides[0]), GL_UNSIGNED_INT, nullptr);
+
+    if ( mTexture ){
+        mTexture->release();
+    }
 
     mVBO->release();
     mIndices->release();
@@ -77,6 +99,7 @@ void LP_OpenMeshImpl::Draw(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebuff
     prog->disableAttributeArray("a_pos");
     prog->disableAttributeArray("a_norm");
     prog->disableAttributeArray("a_color");
+    prog->disableAttributeArray("a_tex");
     prog->release();
 
     QMatrix4x4 epsTrans;
@@ -91,7 +114,7 @@ void LP_OpenMeshImpl::Draw(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebuff
     mIndices->bind();
 
     mProgramBoundary->enableAttributeArray("a_pos");
-    mProgramBoundary->setAttributeBuffer("a_pos",GL_FLOAT, 0, 3, 36);
+    mProgramBoundary->setAttributeBuffer("a_pos",GL_FLOAT, 0, 3, 44);
 
     f->glDrawElements(  GL_LINES,
                         GLsizei(mStrides[1]-mStrides[0]),
@@ -143,21 +166,26 @@ bool LP_OpenMeshImpl::DrawSetup(QOpenGLContext *ctx, QSurface *surf, QVariant &o
                 "attribute vec3 a_pos;\n"
                 "attribute vec3 a_norm;\n"
                 "attribute vec3 a_color;\n"
+                "attribute vec2 a_tex;\n"
                 "uniform mat4 m4_view;\n"
                 "uniform mat4 m4_mvp;\n"
                 "uniform mat3 m3_normal;\n"
                 "varying vec3 normal;\n"
                 "varying vec3 pos;\n"
                 "varying vec3 vcolor;\n"
+                "varying vec2 texCoord;\n"
                 "void main(){\n"
                 "   pos = vec3( m4_view * vec4(a_pos, 1.0));\n"
                 "   normal = m3_normal * a_norm;\n"
                 "   vcolor = a_color;\n"
+                "   texCoord = a_tex;\n"
                 "   gl_Position = m4_mvp*vec4(a_pos, 1.0);\n"
                 "}";
         fsh =
+                "uniform sampler2D u_tex;\n"    //The image texture
                 "varying vec3 normal;\n"
                 "varying vec3 pos;\n"
+                "varying vec2 texCoord;\n"
                 "varying vec3 vcolor;\n"
                 "void main(){\n"
                 "   vec3 lightPos = vec3(0.0, 1000.0, 0.0);\n"
@@ -165,9 +193,10 @@ bool LP_OpenMeshImpl::DrawSetup(QOpenGLContext *ctx, QSurface *surf, QVariant &o
                 "   vec3 lightDir = normalize(lightPos - pos);\n"
                 "   vec3 H = normalize(viewDir + lightDir);\n"
                 "   vec3 N = normalize(normal);\n"
-                "   vec3 ambi = vcolor;\n"
+                "   vec3 texColor = texture2D(u_tex, texCoord).rgb;\n"
+                "   vec3 ambi = vcolor + texColor;\n"
                 "   float Kd = max(dot(H, N), 0.0);\n"
-                "   vec3 diff = Kd * vec3(0.5, 0.5, 0.5);\n"
+                "   vec3 diff = Kd * vec3(0.2, 0.2, 0.2);\n"
                 "   vec3 color = ambi + diff;\n"
                 "   float Ks = pow( Kd, 80.0 );\n"
                 "   vec3 spec = Ks * vec3(0.5, 0.5, 0.5);\n"
@@ -225,30 +254,39 @@ bool LP_OpenMeshImpl::DrawSetup(QOpenGLContext *ctx, QSurface *surf, QVariant &o
         (*w_it++) = e.v0().idx();
         (*w_it++) = e.v1().idx();
     }
+    const bool bTex = mMesh->has_vertex_texcoords2D();
 
     mVBO = new QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
     mVBO->setUsagePattern(QOpenGLBuffer::StreamDraw);
     mVBO->create();
 
+
+
     auto nVs = mMesh->n_vertices();
     const int _a = int( nVs * (sizeof(OpMesh::Point)+
                                sizeof(OpMesh::Normal)+
-                               sizeof(OpMesh::Point)));
+                               sizeof(OpMesh::Point)+
+                               sizeof(OpMesh::TexCoord2D)));
+
     mVBO->bind();
     mVBO->allocate( _a );
     //mVBO->allocate( m->points(), int( m->n_vertices() * sizeof(*m->points())));
-    auto ptr = static_cast<OpMesh::Point*>(mVBO->mapRange(0, _a,
+    auto ptr = static_cast<float*>(mVBO->mapRange(0, _a,
                                                           QOpenGLBuffer::RangeWrite |
                                                           QOpenGLBuffer::RangeInvalidateBuffer));
     auto pptr = mMesh->points();
     auto nptr = mMesh->vertex_normals();
     auto cptr = mMesh->vertex_colors();
+    auto tptr = bTex?mMesh->texcoords2D():nullptr;
 
     QVector3D c;
     const float _inv = 1.0f / 255.0f;
-    for ( size_t i=0; i<nVs; ++i, ++ptr, ++pptr, ++nptr, ++cptr ){
+    for ( size_t i=0; i<nVs; ++i, ++pptr, ++nptr, ++cptr ){
         memcpy(ptr, pptr, sizeof(OpMesh::Point));
-        memcpy(++ptr, nptr, sizeof(OpMesh::Normal));
+        ptr += sizeof(OpMesh::Point)/sizeof(*ptr);
+
+        memcpy(ptr, nptr, sizeof(OpMesh::Normal));
+        ptr += sizeof(OpMesh::Normal)/sizeof(*ptr);
 
         const uchar *_p = cptr->data();
 
@@ -256,7 +294,17 @@ bool LP_OpenMeshImpl::DrawSetup(QOpenGLContext *ctx, QSurface *surf, QVariant &o
         c.setY(_p[1] * _inv);
         c.setZ(_p[2] * _inv);
 
-        memcpy(++ptr, &c[0], sizeof(OpMesh::Point));
+        memcpy(ptr, &c[0], sizeof(OpMesh::Point));
+        ptr += sizeof(OpMesh::Point)/sizeof(*ptr);
+
+        if ( tptr ){
+            memcpy(ptr, tptr, sizeof(OpMesh::TexCoord2D));
+            ++tptr;
+        }else{
+            constexpr OpMesh::TexCoord2D tmp{0.0f, 0.0f};
+            memcpy(ptr, &tmp, sizeof(OpMesh::TexCoord2D));
+        }
+        ptr += sizeof(OpMesh::TexCoord2D)/sizeof(*ptr);
 
         if ( mBBmin.x() > (*pptr)[0]){
             mBBmin.setX((*pptr)[0]);
@@ -280,6 +328,16 @@ bool LP_OpenMeshImpl::DrawSetup(QOpenGLContext *ctx, QSurface *surf, QVariant &o
     }
     mVBO->unmap();
     mVBO->release();
+
+    if ( bTex ){
+        QImage tex(mTexturePath);
+        if (!tex.isNull()){
+            mTexture = new QOpenGLTexture(tex.mirrored());
+            mTexture->create();
+        }else{
+            qWarning() << "Invalid texture file : " << mTexturePath;
+        }
+    }
 
     //===============================================================
     //Indice buffer
@@ -330,6 +388,12 @@ bool LP_OpenMeshImpl::DrawCleanUp(QOpenGLContext *ctx, QSurface *surf)
         mVBO = nullptr;
     }
 
+    if ( mTexture ){
+        mTexture->release();
+        delete mTexture;
+        mTexture = nullptr;
+    }
+
     if ( mIndices ){
         mIndices->release();
         delete mIndices;
@@ -365,7 +429,7 @@ void LP_OpenMeshImpl::DrawSelect(QOpenGLContext *ctx, QSurface *surf, QOpenGLFra
     mVBO->bind();
     mIndices->bind();
     prog->enableAttributeArray("a_pos");
-    prog->setAttributeBuffer("a_pos",GL_FLOAT, 0, 3, 36);
+    prog->setAttributeBuffer("a_pos",GL_FLOAT, 0, 3, 44);
 
     f->glDrawElements(GL_TRIANGLES, GLsizei(mStrides[0]), GL_UNSIGNED_INT, nullptr);
 

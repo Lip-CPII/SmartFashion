@@ -16,6 +16,8 @@
 #include <QMatrix4x4>
 #include <QPushButton>
 #include <QtConcurrent/QtConcurrent>
+#include <QPainter>
+#include <QPainterPath>
 
 REGISTER_FUNCTIONAL_IMPLEMENT(LP_Pick_Feature_Points, Create Feature Points, menuTools)
 
@@ -44,13 +46,68 @@ QWidget *LP_Pick_Feature_Points::DockUi()
     QPushButton *button = new QPushButton(tr("Export"));
     QPushButton *impFts = new QPushButton(tr("Import"));
     QPushButton *expFts = new QPushButton(tr("Export Pick Order"));
+    QPushButton *mergeFts = new QPushButton(tr("Merge"));
 
     layout->addWidget(impFts);
+    layout->addWidget(mergeFts);
     layout->addWidget(mLabel);
     layout->addWidget(button);
     layout->addWidget(expFts);
 
     layout->addStretch();
+
+    connect(mergeFts, &QPushButton::clicked,[this](){
+        auto land1 = QFileDialog::getOpenFileName(0,"Import LandMarks1");
+        if ( land1.isEmpty()){
+            return;
+        }
+        auto land2 = QFileDialog::getOpenFileName(0,"Import LandMarks2");
+        if ( land2.isEmpty()){
+            return;
+        }
+        std::function<QMap<uint, uint>(const QString &filename)> func;
+        func = [](const QString &filename){
+            QMap<uint,uint> map;
+
+            QFile file(filename);
+            if ( !file.open(QIODevice::ReadOnly)){
+                return map;
+            }
+
+            QTextStream in(&file);
+            while (!in.atEnd()){
+                auto line = in.readLine();
+                auto items = line.split(' ');
+                if ( 2 == items.size()){
+                    map.insert(items[1].toUInt(), items[0].toUInt());
+                }
+            }
+
+            file.close();
+
+            return map;
+        };
+        auto &&map1 = func(land1);
+        auto &&map2 = func(land2);
+        if ( map1.isEmpty() || map2.isEmpty()){
+            return;
+        }
+        if ( map1.size() != map2.size()){
+            qWarning() << "Number of features mismatched";
+            return;
+        }
+        QFile exp("../mergedLandmarks.txt");
+        if ( !exp.open(QIODevice::WriteOnly)){
+            return;
+        }
+        const int nFts = map1.size();
+        QTextStream out(&exp);
+        for ( int i=0; i<nFts; ++i ){
+            out << (map1.begin()+i).value() << " " << (map2.begin()+i).value() << "\n";
+        }
+
+        exp.close();
+    });
 
     connect(impFts, &QPushButton::clicked,[this](){
         auto openPath = QFileDialog::getOpenFileName(0,"Import LandMarks");
@@ -230,6 +287,8 @@ void LP_Pick_Feature_Points::FunctionalRender(QOpenGLContext *ctx, QSurface *sur
     Q_UNUSED(surf)  //Mostly not used within a Functional.
     Q_UNUSED(options)   //Not used in this functional.
 
+    mCam = cam;
+
     if ( !mInitialized ){   //The OpenGL resources, e.g. Shader, not initilized
         initializeGL();     //Call the initialize member function.
     }                       //Not compulsory, (Using member function for cleaness only)
@@ -277,6 +336,46 @@ void LP_Pick_Feature_Points::FunctionalRender(QOpenGLContext *ctx, QSurface *sur
     fbo->release();
     f->glDisable(GL_PROGRAM_POINT_SIZE);
     f->glDisable(GL_DEPTH_TEST);
+}
+
+void LP_Pick_Feature_Points::PainterDraw(QWidget *glW)
+{
+    if ( "openGLWidget_2" == glW->objectName()){
+        return;
+    }
+    if ( !mCam.lock() || !mObject.lock()){
+        return;
+    }
+    auto m = std::static_pointer_cast<LP_OpenMeshImpl>(mObject.lock())->Mesh();
+    auto cam = mCam.lock();
+    auto view = cam->ViewMatrix(),
+         proj = cam->ProjectionMatrix(),
+         vp   = cam->ViewportMatrix();
+
+    view = vp * proj * view;
+    auto &&h = cam->ResolutionY();
+    QPainter painter(glW);
+    int fontSize(13);
+    QFont font("Arial", fontSize);
+    QFontMetrics fmetric(font);
+    QFont orgFont = painter.font();
+    painter.setPen(qRgb(255,0,0));
+
+    painter.setFont(font);
+
+    for (auto it = mPoints.begin(); it != mPoints.end(); ++it ){
+        auto vid = it.key();
+        auto pickId = it.value();
+        if ( vid > m->n_vertices()){
+            continue;
+        }
+        auto pt = m->points()[vid];
+        QVector3D v(pt[0], pt[1], pt[2]);
+        v = view * v;
+        painter.drawText(QPointF(v.x(), h-v.y()), QString("%1").arg(pickId));
+    }
+
+    painter.setFont(orgFont);
 }
 
 void LP_Pick_Feature_Points::initializeGL()

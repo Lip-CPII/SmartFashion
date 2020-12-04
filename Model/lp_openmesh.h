@@ -7,6 +7,7 @@
 #include <OpenMesh/Core/Mesh/TriMesh_ArrayKernelT.hh>
 #include <OpenMesh/Core/Mesh/Attributes.hh>
 #include <QOpenGLBuffer>
+#include <QOpenGLTexture>
 #include <QDebug>
 
 struct MeshTraits : public OpenMesh::DefaultTraits
@@ -46,10 +47,15 @@ public:
     MyMesh Mesh() const;
     void SetMesh(const MyMesh &mesh);
 
+    QString TexturePath() const;
+    void SetTexturePath(const QString &texPath );
+
     void _Dump(QDebug &debug) override;
 
     //For @Issac 30-11-2020
     QString mFileName;
+
+
 
 protected:
     explicit LP_OpenMeshImpl(LP_Object parent = nullptr);
@@ -62,9 +68,9 @@ private:
     std::shared_ptr<QOpenGLShaderProgram> mProgramBoundary;
     QOpenGLBuffer *mVBO;
     QOpenGLBuffer *mIndices;
-
+    QOpenGLTexture *mTexture;
     size_t mStrides[3];
-
+    QString mTexturePath;
 };
 
 

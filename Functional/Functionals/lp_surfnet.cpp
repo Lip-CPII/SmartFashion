@@ -13,6 +13,7 @@
 #include <QOpenGLExtraFunctions>
 #include <QOpenGLFramebufferObject>
 #include <QMouseEvent>
+#include <QPainter>
 
 REGISTER_FUNCTIONAL_IMPLEMENT(LP_SURFNet, SURFNet, menuTool)
 
@@ -111,7 +112,7 @@ QWidget *LP_SURFNet::DockUi()
                 lboX.AssignMesh(mMeshX.get());
                 lboX.Construct();
 
-                lboY.AssignMesh(mMeshX.get());
+                lboY.AssignMesh(mMeshY.get());
                 lboY.Construct();
 
                 mAx = lboX.AMatrix();
@@ -142,6 +143,7 @@ QWidget *LP_SURFNet::DockUi()
 //                }
                 qDebug() << "Mesh loaded!";
             }  catch (const std::exception &e) {
+                qWarning() << "Load *.off failed";
                 qDebug() << e.what();
             } catch (...){
                 qDebug() << "Unhandled error!";
@@ -154,6 +156,7 @@ QWidget *LP_SURFNet::DockUi()
 
 bool LP_SURFNet::Run()
 {
+    emit glUpdateRequest();
     return false;
 }
 
@@ -200,23 +203,62 @@ bool LP_SURFNet::eventFilter(QObject *watched, QEvent *event)
         });
         mP = std::move(p);
     };
+
+    std::function<int(const QString &, const int &)> p2p;
+    p2p = [this](const QString & path, const int &vid){
+        auto filename = tr("%1/p2p.txt").arg(path);
+        QFile f(filename);
+        if ( !f.open(QIODevice::ReadOnly)){
+            return -1;
+        }
+        QTextStream in(&f);
+        QString line;
+        std::vector<uint> p;
+        while (!in.atEnd()){
+            line = in.readLine();
+            p.emplace_back(line.toUInt());  //Asolute
+        }
+        f.close();
+
+//        std::transform(p.begin(), p.end(), p.begin(), [base=p.data(),&A](const double &v){
+//            return v / A[&v - base];
+//        });
+
+        return int(p[vid]);
+    };
+
     if ( QEvent::MouseButtonRelease == event->type()){
         auto e = static_cast<QMouseEvent*>(event);
 
         if ( e->button() == Qt::LeftButton ){
-            if (mMeshX){
+            if (mMeshY){
 
                 //Select the entity vertices
                 auto &&tmp = g_GLSelector->SelectPoints3D("Shade",
-                                                    &mVx.front()[0],
-                                                    mVx.size(),
+                                                    &mVy.front()[0],
+                                                    mVy.size(),
                                                     e->pos(), true);
+
                 if ( !tmp.empty()){
                     auto &&pt_id = tmp.front();
                     qDebug() << "Picked : " << tmp;
-                    mPoints.clear();
-                    mPoints.insert(pt_id,0);
-                    calCorrespondence(mCorrPath, pt_id, mAx);
+                    auto corrId = p2p(mCorrPath, pt_id);
+                    if (Qt::ControlModifier & e->modifiers()){
+                        if ( !mPoints.contains(pt_id)){
+                            mPoints.insert(pt_id, mPoints.size());
+                            mP2P.insert(pt_id, corrId);
+                        }
+                    }else if (Qt::ShiftModifier & e->modifiers()){
+                        if ( mPoints.contains(pt_id)){
+                            qDebug() << mPoints.take(pt_id);
+                            mP2P.take(pt_id);
+                        }
+                    }else{
+                        mPoints.clear();
+                        mP2P.clear();
+                        mPoints.insert(pt_id,0);
+                        mP2P.insert(pt_id,corrId);
+                    }
 
                     emit glUpdateRequest();
 
@@ -225,6 +267,7 @@ bool LP_SURFNet::eventFilter(QObject *watched, QEvent *event)
             }
         }else if ( e->button() == Qt::RightButton ){
             mPoints.clear();
+            mP2P.clear();
             emit glUpdateRequest();
             return true;
 //            QStringList list;
@@ -239,7 +282,7 @@ void LP_SURFNet::FunctionalRender(QOpenGLContext *ctx, QSurface *surf, QOpenGLFr
 {
     Q_UNUSED(surf)  //Mostly not used within a Functional.
 
-
+    mCam = cam;
     if ( !mInitialized ){   //The OpenGL resources, e.g. Shader, not initilized
         initializeGL();     //Call the initialize member function.
     }                       //Not compulsory, (Using member function for cleaness only)
@@ -256,12 +299,15 @@ void LP_SURFNet::FunctionalRender(QOpenGLContext *ctx, QSurface *surf, QOpenGLFr
     f->glEnable(GL_PROGRAM_POINT_SIZE);     //Enable point-size controlled by shader
     f->glEnable(GL_DEPTH_TEST);             //Enable depth test
 
+    auto view_ = view;
+    view_.translate(QVector3D(-1.5f,0.0f,0.0f));
+
     mProgram->bind();                       //Bind the member shader to the context
-    mProgram->setUniformValue("m4_mvp", proj * view );  //Set the Model-View-Projection matrix
-    mProgram->setUniformValue("m4_view",view);
-    mProgram->setUniformValue("m3_normal", view.normalMatrix());
+    mProgram->setUniformValue("m4_mvp", proj * view_ );  //Set the Model-View-Projection matrix
+    mProgram->setUniformValue("m4_view",view_);
+    mProgram->setUniformValue("m3_normal", view_.normalMatrix());
     mProgram->setUniformValue("f_pointSize", 7.0f);     //Set the point-size which is enabled before
-    mProgram->setUniformValue("v4_color", QVector4D( 0.5f, 0.8f, 0.1f, 0.6f )); //Set the point color
+    mProgram->setUniformValue("v4_color", QVector4D( 0.3f, 0.6f, 0.1f, 0.6f )); //Set the point color
 
 
     mProgram->enableAttributeArray("a_pos");        //Enable the "a_pos" attribute buffer of the shader
@@ -274,6 +320,41 @@ void LP_SURFNet::FunctionalRender(QOpenGLContext *ctx, QSurface *surf, QOpenGLFr
                       GL_UNSIGNED_INT, mIx.data());
 
     QString compare = "Selected id:";
+    if ( !mPoints.empty()){                         //If some vertices are picked and record in mPoints
+        mProgram->setUniformValue("f_pointSize", 8.0f);    //Enlarge the point-size
+        mProgram->setUniformValue("v4_color", QVector4D( 0.1f, 0.1f, 0.8f, 1.0f )); //Change to another color
+
+
+        std::vector<uint> list(mPoints.size());
+        std::vector<uint> list2(mPoints.size());
+        for ( size_t i = 0; i<list.size(); ++i ){
+            list[i] = (mPoints.begin()+i).key();
+            compare += tr("%1 ").arg(list[i]);
+
+            list2[i] = mP2P[list[i]];
+        }
+
+        // ONLY draw the picked vertices again
+        f->glDrawElements(GL_POINTS, list.size(), GL_UNSIGNED_INT, list.data());
+
+        mProgram->setUniformValue("f_pointSize", 13.0f);    //Enlarge the point-size
+        mProgram->setUniformValue("v4_color", QVector4D( 0.6f, 0.15f, 0.15f, 1.0f )); //Change to another color
+
+        // ONLY draw the picked vertices again
+        f->glDrawElements(GL_POINTS, list2.size(), GL_UNSIGNED_INT, list2.data());
+
+    }
+
+    mProgram->setUniformValue("m4_mvp", proj * view );  //Set the Model-View-Projection matrix
+    mProgram->setUniformValue("f_pointSize", 3.5f);    //Enlarge the point-size
+    mProgram->setUniformValue("v4_color", QVector4D( 0.5f, 0.5f, 0.5f, 0.6f )); //Set the point color
+    mProgram->setAttributeArray("a_pos",mVy.data()); //Set the buffer data of "a_pos"
+    mProgram->setAttributeArray("a_norm",mNy.data()); //Set the buffer data of "a_pos"
+
+    //f->glDrawArrays(GL_POINTS, 0, GLsizei(mVy.size()));    //Actually draw all the points
+    f->glDrawElements(GL_TRIANGLES, mIy.size(),
+                      GL_UNSIGNED_INT, mIy.data());
+
     if ( !mPoints.empty()){                         //If some vertices are picked and record in mPoints
         mProgram->setUniformValue("f_pointSize", 13.0f);    //Enlarge the point-size
         mProgram->setUniformValue("v4_color", QVector4D( 0.1f, 0.6f, 0.1f, 1.0f )); //Change to another color
@@ -288,43 +369,32 @@ void LP_SURFNet::FunctionalRender(QOpenGLContext *ctx, QSurface *surf, QOpenGLFr
 
     }
 
-    view.translate(QVector3D(1.5f,0.0f,0.0f));
-    mProgram->setUniformValue("m4_mvp", proj * view );  //Set the Model-View-Projection matrix
-    mProgram->setUniformValue("f_pointSize", 3.5f);    //Enlarge the point-size
-    mProgram->setUniformValue("v4_color", QVector4D( 0.5f, 0.5f, 0.5f, 0.6f )); //Set the point color
-    mProgram->setAttributeArray("a_pos",mVy.data()); //Set the buffer data of "a_pos"
-    mProgram->setAttributeArray("a_norm",mNy.data()); //Set the buffer data of "a_pos"
+//    compare += tr(" %1 ").arg("Correspondence : ");
+//    auto nps = mP.size();
+//    if ( nps ){
+//        mProgram->setUniformValue("f_pointSize", 15.0f);    //Enlarge the point-size
 
-    //f->glDrawArrays(GL_POINTS, 0, GLsizei(mVy.size()));    //Actually draw all the points
-    f->glDrawElements(GL_TRIANGLES, mIy.size(),
-                      GL_UNSIGNED_INT, mIy.data());
+//        auto minmax = std::minmax_element(mP.begin(),mP.end());
+//        auto minId = minmax.first - mP.begin();
+//        auto maxId = minmax.second - mP.begin();
 
-    compare += tr(" %1 ").arg("Correspondence : ");
-    auto nps = mP.size();
-    if ( nps ){
-        mProgram->setUniformValue("f_pointSize", 15.0f);    //Enlarge the point-size
+//        compare += tr("min:%1 max:%2").arg(minId).arg(maxId);
 
-        auto minmax = std::minmax_element(mP.begin(),mP.end());
-        auto minId = minmax.first - mP.begin();
-        auto maxId = minmax.second - mP.begin();
+//        mProgram->setUniformValue("v4_color", QVector4D( 0.0f, 0.0f, 0.0f, 1.0f )); //Set the point color
+//        f->glDrawArrays(GL_POINTS, minId, 1);    //Actually draw all the points
 
-        compare += tr("min:%1 max:%2").arg(minId).arg(maxId);
+//        mProgram->setUniformValue("v4_color", QVector4D( 1.0f, 0.0f, 0.0f, 1.0f )); //Set the point color
+//        f->glDrawArrays(GL_POINTS, maxId, 1);    //Actually draw all the points
 
-        mProgram->setUniformValue("v4_color", QVector4D( 0.0f, 0.0f, 0.0f, 1.0f )); //Set the point color
-        f->glDrawArrays(GL_POINTS, minId, 1);    //Actually draw all the points
+//        mProgram->setUniformValue("f_pointSize", 5.0f);    //Enlarge the point-size
 
-        mProgram->setUniformValue("v4_color", QVector4D( 1.0f, 0.0f, 0.0f, 1.0f )); //Set the point color
-        f->glDrawArrays(GL_POINTS, maxId, 1);    //Actually draw all the points
+//        for ( size_t i=0; i < nps; ++i ){
+//            mProgram->setUniformValue("v4_color", QVector4D( mP[i], 1.0-mP[i], 1.0-mP[i], 1.0f )); //Set the point color
+//            f->glDrawArrays(GL_POINTS, i, 1);    //Actually draw all the points
+//        }
+//    }
 
-        mProgram->setUniformValue("f_pointSize", 5.0f);    //Enlarge the point-size
-
-        for ( size_t i=0; i < nps; ++i ){
-            mProgram->setUniformValue("v4_color", QVector4D( mP[i], 1.0-mP[i], 1.0-mP[i], 1.0f )); //Set the point color
-            f->glDrawArrays(GL_POINTS, i, 1);    //Actually draw all the points
-        }
-    }
-
-    qDebug() << compare;
+//    qDebug() << compare;
 
     mProgram->disableAttributeArray("a_pos");   //Disable the "a_pos" buffer
     mProgram->disableAttributeArray("a_norm");
@@ -333,6 +403,55 @@ void LP_SURFNet::FunctionalRender(QOpenGLContext *ctx, QSurface *surf, QOpenGLFr
     fbo->release();
     f->glDisable(GL_PROGRAM_POINT_SIZE);
     f->glDisable(GL_DEPTH_TEST);
+}
+
+void LP_SURFNet::PainterDraw(QWidget *glW)
+{
+    if ( "openGLWidget_2" == glW->objectName()){
+        return;
+    }
+    if ( !mCam.lock() || mPoints.empty()){
+        return;
+    }
+    auto cam = mCam.lock();
+    auto view = cam->ViewMatrix(),
+         proj = cam->ProjectionMatrix(),
+         vp   = cam->ViewportMatrix();
+
+    auto view2 = view;
+    view2.translate(QVector3D(-1.5f,0.0f,0.0f));
+
+    view = vp * proj * view;
+    view2 = vp * proj * view2;
+
+    auto &&h = cam->ResolutionY();
+    QPainter painter(glW);
+    int fontSize(13);
+    QFont font("Arial", fontSize);
+    QFontMetrics fmetric(font);
+    QFont orgFont = painter.font();
+    painter.setPen(qRgb(255,0,0));
+
+    painter.setFont(font);
+
+    for (auto it = mPoints.begin(); it != mPoints.end(); ++it ){
+        auto vid = it.key();
+        auto pickId = it.value();
+        if ( vid > mVy.size()){
+            continue;
+        }
+        auto pt = mVy[vid];
+        QVector3D v(pt[0], pt[1], pt[2]);
+        v = view * v;
+        painter.drawText(QPointF(v.x()+5, h-v.y()), QString("%1").arg(pickId));
+
+        pt = mVx[mP2P[vid]];
+        QVector3D v2(pt[0], pt[1], pt[2]);
+        v = view2 * v2;
+        painter.drawText(QPointF(v.x()+5, h-v.y()), QString("%1").arg(pickId));
+    }
+
+    painter.setFont(orgFont);
 }
 
 void LP_SURFNet::initializeGL()
