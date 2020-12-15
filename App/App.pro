@@ -61,6 +61,7 @@ unix:!macx: LIBS += -L$$PWD/../../OpenCV/install/lib/  \
     -lopencv_core \
     -lopencv_videoio \
     -lopencv_imgproc \
-    -lopencv_imgcodecs
+    -lopencv_imgcodecs \
+    -lopencv_dnn
 
 unix:!macx: LIBS += -L$$PWD/../../OpenMesh/lib/ -lOpenMeshCore

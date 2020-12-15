@@ -232,9 +232,9 @@ void LP_OpenGLWidget::mouseMoveEvent(QMouseEvent *e)
             h   = pCam->ResolutionY();
 
      QMatrix4x4 mv(pCam->ViewMatrix());//, proj(pCam->ProjectionMatrix());
-
+     QPoint pos  = e->pos();
      if ((Qt::MiddleButton | Qt::RightButton) & e->buttons()){
-         QPoint pos  = e->pos();
+
          if ( Qt::ControlModifier == e->modifiers()){//Pan
              float   hw   = 0.5*w,
                      hh   = 0.5*h;
@@ -257,12 +257,13 @@ void LP_OpenGLWidget::mouseMoveEvent(QMouseEvent *e)
              m->rotateCam( angle[0], QVector3D(vy), pCam);
              m->rotateCam( angle[1], QVector3D(vx), pCam);
          }
-         mCursorPos[0]  = pos.x();
-         mCursorPos[1]  = pos.y();
+
          QMetaObject::invokeMethod(mRenderer,
                                    "updateGL",Qt::QueuedConnection);
      }
      mRenderer->Lock().unlock();
+     mCursorPos[0]  = pos.x();
+     mCursorPos[1]  = pos.y();
 }
 
 void LP_OpenGLWidget::wheelEvent(QWheelEvent *e)
@@ -339,6 +340,7 @@ void LP_OpenGLWidget::keyPressEvent(QKeyEvent *e)
     auto &lock = mRenderer->Lock();
     lock.lockForWrite();
 
+    e->ignore();
     switch (e->key()) {
     case Qt::Key_0:
         if (Qt::KeypadModifier == e->modifiers()){
@@ -433,9 +435,23 @@ void LP_OpenGLWidget::keyPressEvent(QKeyEvent *e)
             e->accept();
         }
         break;
-    default:
-        e->ignore();
-        break;
+    default: {
+            const auto &selObj = g_GLSelector->Objects();
+            if ( selObj.isEmpty()){
+                break;
+            }
+            switch (e->key()) {
+            case Qt::Key_G:
+                qDebug() << cursor().pos() - pos() - window()->pos()
+                         << window()->pos();
+                //Start the move geometry functional
+                break;
+            default:
+                e->ignore();
+                break;
+            }
+            break;
+        }
     }
     lock.unlock();
     if (e->isAccepted()){

@@ -31,6 +31,7 @@ void LP_ObjectImpl::Draw(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebuffer
     Q_UNUSED(surf)
     Q_UNUSED(cam)
     Q_UNUSED(fbo)
+    Q_UNUSED(option)
     Q_ASSERT_X(0,__FILE__,"Please override Draw(...) for display etc.");
 }
 

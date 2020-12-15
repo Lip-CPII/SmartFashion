@@ -184,10 +184,10 @@ bool LP_Mesh_Slicer::eventFilter(QObject *watched, QEvent *event)
                         QVector3D minB, maxB;
                         c->BoundingBox(minB, maxB);
 
-//                        mRange[0] = minB.y();
-//                        mRange[1] = maxB.y();
-                        mRange[0] = minB.z();
-                        mRange[1] = maxB.z();
+                        mRange[0] = minB.y();
+                        mRange[1] = maxB.y();
+//                        mRange[0] = minB.z();
+//                        mRange[1] = maxB.z();
 
                         mObject = o;
                         mLabel->setText(mObject.lock()->Uuid().toString());
@@ -280,9 +280,9 @@ void LP_Mesh_Slicer::FunctionalRender(QOpenGLContext *ctx, QSurface *surf, QOpen
             const auto &&nPaths = paths.size();
             for ( size_t j=0; j<nPaths; ++j ){
                 auto &path = paths.at(j);
-                //            QVector4D rgb(0.0,0.0,0.0,1.0);
-                //            rainbow(i, nPaths, rgb[0], rgb[1], rgb[2] );
-                //            mProgram->setUniformValue("v4_color", rgb );
+//                            QVector4D rgb(0.0,0.0,0.0,1.0);
+//                            rainbow(i, nSections, rgb[0], rgb[1], rgb[2] );
+//                            mProgram->setUniformValue("v4_color", rgb );
                             mProgram->setAttributeArray("a_pos",path.data());
 
                             f->glDrawArrays(GL_LINE_STRIP, 0, GLsizei(path.size()));
@@ -356,8 +356,8 @@ void LP_Mesh_Slicer::sliderValueChanged(int v)
             Intersector::Plane plane;
 
             plane.normal = { mNormal[0], mNormal[1], mNormal[2] };
-//            plane.origin = { 0.0f, height, 0.0f };
-            plane.origin = { 0.0f, 0.0f, height };
+            plane.origin = { 0.0f, height, 0.0f };
+//            plane.origin = { 0.0f, 0.0f, height };
 
             auto result = mesh.Intersect(plane);
             // the result is a vector of Path3D objects, which are planar polylines

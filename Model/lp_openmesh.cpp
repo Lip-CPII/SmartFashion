@@ -57,8 +57,9 @@ void LP_OpenMeshImpl::Draw(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebuff
     Q_UNUSED(surf)
     Q_UNUSED(fbo)
 
+    auto model = ModelTrans();
     auto proj = cam->ProjectionMatrix();
-    auto view = cam->ViewMatrix();
+    auto view = cam->ViewMatrix() * model;
     auto f = ctx->extraFunctions();
 
     auto it = mPrograms.find(option.toString());
@@ -428,6 +429,7 @@ void LP_OpenMeshImpl::DrawSelect(QOpenGLContext *ctx, QSurface *surf, QOpenGLFra
 
     mVBO->bind();
     mIndices->bind();
+    prog->setUniformValue("m4_mvp", cam->ProjectionMatrix() * cam->ViewMatrix() * mTrans);
     prog->enableAttributeArray("a_pos");
     prog->setAttributeBuffer("a_pos",GL_FLOAT, 0, 3, 44);
 

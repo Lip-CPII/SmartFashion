@@ -51,8 +51,8 @@ private:
     float mRange[2] = {0,0};
     QOpenGLShaderProgram *mProgram = nullptr;
     std::weak_ptr<LP_ObjectImpl> mObject;
-//    QVector3D mNormal{0.f,1.0f,0.f};
-    QVector3D mNormal{0.f,0.0f,1.f};
+    QVector3D mNormal{0.f,1.0f,0.f};
+//    QVector3D mNormal{0.f,0.0f,1.f};
     QFutureWatcher<void> mWatcher;
     QMap<int, std::vector<std::vector<QVector3D>>> mPaths;
     QReadWriteLock mLock;

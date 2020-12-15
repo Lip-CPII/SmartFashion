@@ -208,8 +208,11 @@ void LP_GLRenderer::updateTarget()
     for ( auto &o : *targets){
         LP_Geometryw geo = std::static_pointer_cast<LP_GeometryImpl>(o.lock());
         if ( auto g = geo.lock()){
+            auto trans = g->ModelTrans();
             QVector3D bmin, bmax;
             g->BoundingBox(bmin, bmax);
+            bmin = trans * bmin;
+            bmax = trans * bmax;
             bbmin.setX( qMin(bbmin.x(),bmin.x()));
             bbmin.setY( qMin(bbmin.y(),bmin.y()));
             bbmin.setZ( qMin(bbmin.z(),bmin.z()));

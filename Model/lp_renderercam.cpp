@@ -1,5 +1,6 @@
 #include "lp_renderercam.h"
 #include <QtMath>
+#include <cstring>
 
 LP_RendererCamImpl::LP_RendererCamImpl(LP_Object parent) : LP_ObjectImpl(parent)
 {
@@ -104,6 +105,27 @@ QVector3D LP_RendererCamImpl::Position() const
 void LP_RendererCamImpl::SetPosition(const QVector3D &Position)
 {
     m_Position = Position;
+}
+
+void LP_RendererCamImpl::Imitate(const LP_RendererCam o)
+{
+    m_bPerspective = o->IsPerspective();
+    m_ResolutionX = o->ResolutionX();
+    m_ResolutionY = o->ResolutionY();
+    m_FOV = o->FOV();
+    m_Left = o->Left();
+    m_Right = o->Right();
+    m_Top = o->Top();
+    m_Bottom = o->Bottom();
+    m_Near = o->Near();
+    m_Far = o->Far();
+    m_Diagonal = o->Diagonal();
+
+    m_Target = o->Target();
+    m_Position = o->Position();
+    m_Up = o->Up();
+    m_Pan = o->Pan();
+    m_Roll = o->Roll();
 }
 
 QVector3D LP_RendererCamImpl::Target() const

@@ -14,6 +14,8 @@ public:
         return LP_RendererCam(new LP_RendererCamImpl(parent));
     }
 
+    void Imitate(const LP_RendererCam o);
+
     QVector3D Target() const;
     void SetTarget(const QVector3D &Target);
 

@@ -7,6 +7,7 @@ LP_Document LP_Document::gDoc;
 LP_Document::LP_Document(QObject *parent) : QObject(parent)
 {
     static auto id = qRegisterMetaType<LP_Objectw>("LP_Objectw");
+    Q_UNUSED(id)
 //    qDebug() << id;
 }
 

@@ -27,11 +27,18 @@ typedef std::weak_ptr<LP_ObjectImpl> LP_Objectw;
 class LP_RendererCamImpl;
 typedef std::shared_ptr<LP_RendererCamImpl> LP_RendererCam;
 
+template <class D, class B>
+class Clonable : public B {
+public:
+    std::shared_ptr<B> Clone() const override {
+        return std::make_shared<D>(new D(static_cast<D const&>(*this)));
+    }
+};
+
 class MODEL_EXPORT LP_ObjectImpl : public std::enable_shared_from_this<LP_ObjectImpl>
 {
 public:
     virtual ~LP_ObjectImpl();
-
 
     virtual bool DrawSetup(QOpenGLContext *ctx, QSurface *surf, QVariant &option);
 
@@ -87,6 +94,8 @@ private:
 
     friend class LP_Document;
 };
+
+
 
 inline bool operator ==(const LP_Objectw &a, const LP_Objectw &b){
     return a.lock()->Uuid() == b.lock()->Uuid();

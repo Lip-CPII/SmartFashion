@@ -12,6 +12,16 @@ LP_GeometryImpl::LP_GeometryImpl(LP_Object parent) : LP_ObjectImpl(parent)
 
 }
 
+QMatrix4x4 LP_GeometryImpl::ModelTrans() const
+{
+    return mTrans;
+}
+
+void LP_GeometryImpl::SetModelTrans(const QMatrix4x4 &trans)
+{
+    mTrans = trans;
+}
+
 void LP_GeometryImpl::BoundingBox(QVector3D &bbmin, QVector3D &bbmax)
 {
     bbmin = mBBmin;

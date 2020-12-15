@@ -4,7 +4,7 @@
 
 #include "lp_object.h"
 #include <QVector3D>
-
+#include <QMatrix4x4>
 
 class LP_GeometryImpl;
 typedef std::shared_ptr<LP_GeometryImpl> LP_Geometry;
@@ -28,6 +28,9 @@ public:
         debug.nospace() << "Geometry : Bounding Box (" << mBBmin << ", " << mBBmax << ")"
                         << "\n";
     }
+    QMatrix4x4 ModelTrans() const;
+    void SetModelTrans(const QMatrix4x4 &trans);
+
 protected:
     explicit LP_GeometryImpl(LP_Object parent = nullptr);
 
@@ -35,6 +38,7 @@ protected:
     bool mGLInitialized;
     QVector3D mBBmin;
     QVector3D mBBmax;
+    QMatrix4x4 mTrans;
 };
 
 #endif // LP_GEOMETRY_H
