@@ -337,8 +337,8 @@ QWidget *LP_PoseEstimation::DockUi()
 bool LP_PoseEstimation::Run()
 {
     cv::dnn::Net inputNet =
-            cv::dnn::readNetFromCaffe("./pose_deploy_linevec.prototxt",
-                                      "./pose_iter_440000.caffemodel");
+            cv::dnn::readNetFromCaffe("./runtimes/poseestimation/pose_deploy_linevec.prototxt",
+                                      "./runtimes/poseestimation/pose_iter_440000.caffemodel");
     QString device("gpu");
     if (device == "cpu"){
         qDebug() << "Using CPU device";

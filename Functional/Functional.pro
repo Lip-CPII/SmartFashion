@@ -11,6 +11,7 @@ QMAKE_LFLAGS += -fopenmp
 LIBS += -fopenmp
 }
 
+QMAKE_POST_LINK=$(MAKE) install
 
 # You can make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
@@ -69,12 +70,12 @@ HEADERS += \
     renderer/lp_glrenderer.h \
     renderer/lp_glselector.h
 
-# Default rules for deployment.
-unix {
-    target.path = /usr/lib
-}
 
-!isEmpty(target.path): INSTALLS += target
+# Runtime files
+runtimes.path = $$OUT_PWD/../App/runtimes
+runtimes.files += "runtimes/*"
+INSTALLS += runtimes
+
 
 win32:CONFIG(release, debug|release): LIBS += -L$$OUT_PWD/../Model/release/ -lModel
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$OUT_PWD/../Model/debug/ -lModel
