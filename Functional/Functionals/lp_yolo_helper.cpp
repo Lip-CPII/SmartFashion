@@ -17,6 +17,7 @@
 #include <QMatrix4x4>
 #include <QPushButton>
 #include <QFileDialog>
+#include <QSlider>
 #include <QCheckBox>
 #include <QPainter>
 #include <QPainterPath>
@@ -94,6 +95,7 @@ QWidget *LP_YOLO_Helper::DockUi()
     QPushButton *allback = new QPushButton(tr("|<"));
     QPushButton *end = new QPushButton(tr(">|"));
     QPushButton *autoExp = new QPushButton(tr("AutoExp"));
+    mSlider = new QSlider(Qt::Horizontal);
 
     glayout->addWidget(allback,0,0);
     glayout->addWidget(backward,1,0);
@@ -101,6 +103,7 @@ QWidget *LP_YOLO_Helper::DockUi()
     glayout->addWidget(forward,1,1);
     glayout->addWidget(end,0,2);
     glayout->addWidget(autoExp,1,2);
+    glayout->addWidget(mSlider,2,0,1,3);
 
     group->setLayout(glayout);
     group->setMaximumHeight(100);
@@ -109,6 +112,45 @@ QWidget *LP_YOLO_Helper::DockUi()
     layout->addWidget(group);
 
     mWidget->setLayout(layout);
+
+
+    std::function<QImage(const cv::Mat &)> toQImage = [this](const cv::Mat &frame){
+        if ( mbGreyScale ){
+            cv::Mat gray;
+            cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
+            return QImage((uchar*) gray.data, int(gray.cols),
+                            int(gray.rows), int(gray.step), QImage::Format_Grayscale8).copy();
+        }
+        return QImage((uchar*) frame.data, int(frame.cols),
+                        int(frame.rows), int(frame.step), QImage::Format_BGR888).copy();
+    };
+
+    //Slider
+    connect(mSlider, &QSlider::valueChanged,
+            [this, toQImage](const int & v){
+        if ( !mCVCam ){
+            return;
+        }
+        // const double frame_rate = mCVCam->get(cv::CAP_PROP_FPS);
+        // Calculate number of msec per frame.
+        // (msec/sec / frames/sec = msec/frame)
+        // const double frame_msec = 1000.0 / frame_rate;
+
+        mLock.lockForWrite();
+
+        double curTime = v;
+
+
+        mCVCam->set(cv::CAP_PROP_POS_MSEC, curTime);
+        cv::Mat frame;
+        *mCVCam >> frame;
+
+        mImage = toQImage(frame);
+
+        mLock.unlock();
+        mSlider->setValue(curTime);
+        emit glUpdateRequest();
+    });
 
     connect(checkbox, &QCheckBox::clicked,
             [this](const bool &checked){
@@ -124,16 +166,6 @@ QWidget *LP_YOLO_Helper::DockUi()
         emit glUpdateRequest();
     });
 
-    std::function<QImage(const cv::Mat &)> toQImage = [this](const cv::Mat &frame){
-        if ( mbGreyScale ){
-            cv::Mat gray;
-            cv::cvtColor(frame, gray, cv::COLOR_BGR2GRAY);
-            return QImage((uchar*) gray.data, int(gray.cols),
-                            int(gray.rows), int(gray.step), QImage::Format_Grayscale8).copy();
-        }
-        return QImage((uchar*) frame.data, int(frame.cols),
-                        int(frame.rows), int(frame.step), QImage::Format_BGR888).copy();
-    };
 
     connect(import, &QPushButton::clicked,
             [this, group, toQImage](){
@@ -160,8 +192,11 @@ QWidget *LP_YOLO_Helper::DockUi()
         mImage = toQImage(frame);
 
         emit glUpdateRequest();
-        mCurrentTime = 0.0;
+
+        mSlider->setRange(0.0, mTotalTime);
+        mSlider->setValue(0.0);
         group->setEnabled(true);
+
     });
 
     connect(importbx, &QPushButton::clicked,
@@ -275,6 +310,7 @@ QWidget *LP_YOLO_Helper::DockUi()
         qDebug() << subFolders;
 
         uint nfiles = 0;
+        uint nvalFiles = 0;
 
         int nLeastSamples = std::numeric_limits<int>::max();
         int nMaxSamples = std::numeric_limits<int>::min();
@@ -304,7 +340,7 @@ QWidget *LP_YOLO_Helper::DockUi()
             qDebug() << nStep << " " << subImagePath;
             int nExtra = std::numeric_limits<int>::max();
             if ( files.size() > 200 ){
-                nExtra = 3;
+                //nExtra = 3;
                 nStep = 2;
             }
 
@@ -318,9 +354,10 @@ QWidget *LP_YOLO_Helper::DockUi()
             const auto newSubEvalImagePath = newEvalImagePath + sub + "/";
             const auto newSubEvalLabelsPath = newEvalLabelsPath + sub + "/";
 
+            auto nfiles_ = 0;
             for ( auto &file : files ){
                 QFileInfo info(file);
-                if ( 0 == nfiles % nStep || 0 == nfiles % nExtra ){//Copy to eval
+                if ( 0 == nfiles_ % nStep || 0 == nfiles_ % nExtra ){//Copy to eval
                     if ( !QFile::copy(subImagePath + file,
                                       newSubEvalImagePath + file)){
                         qDebug() << "Copy image failed : " << subImagePath + file + " -> " +
@@ -333,6 +370,7 @@ QWidget *LP_YOLO_Helper::DockUi()
                                     info.baseName() + ".txt" + " -> " +
                                     newSubEvalLabelsPath + info.baseName() + ".txt";
                     }
+                    ++nvalFiles;
                 }else{  //Copy to train
                     if ( !QFile::copy(subImagePath + file,
                                       newSubTrainImagePath + file)){
@@ -347,11 +385,43 @@ QWidget *LP_YOLO_Helper::DockUi()
                                     newSubEvalLabelsPath + info.baseName() + ".txt";
                     }
                 }
-                ++nfiles;
+                ++nfiles_;
             }
+            nfiles += nfiles_;
         }
 
         qDebug() << "Total processed files : " << nfiles;
+
+        auto nTest = nvalFiles * 0.1;   //1-5th of the eval images for testing
+
+        newFolders.mkpath("test/images");
+        newFolders.mkpath("test/labels");
+        const auto newTestImagePath = newFolders.path() + "/test/images/";
+        const auto newTestLabelsPath = newFolders.path() + "/test/labels/";
+        subFolders = imageFolders.entryList(QDir::Dirs | QDir::NoSymLinks | QDir::NoDotAndDotDot);
+        const int nFolders = subFolders.size();
+
+        qDebug() << "Number of cats: " << nFolders;
+        for ( int i=0; i<nTest; ++i ){
+            auto whichCat = QRandomGenerator::global()->bounded(0, nFolders);
+
+            qDebug() << "Cats: " << whichCat << "/" << nFolders;
+
+            const auto subImagePath = newFolders.path() + "/eval/images/" + subFolders[whichCat] + "/";
+            const auto subLabelPath = newFolders.path() + "/eval/labels/" + subFolders[whichCat] + "/";
+
+            qDebug() << "---- " << subImagePath << "/" << subLabelPath;
+
+            QDir sub_dir(subImagePath);
+            auto files = sub_dir.entryList(QDir::Files | QDir::NoSymLinks, QDir::Time);
+            auto whichFile = QRandomGenerator::global()->bounded(0, files.size());
+            QFileInfo info(files[whichFile]);
+            qDebug() << "File: " << whichFile << "/" << files.size();
+
+            QFile::rename(subImagePath + files[whichFile], newTestImagePath + files[whichFile]);
+            QFile::rename(subLabelPath + info.baseName() + ".txt",
+                          newTestLabelsPath + info.baseName() + ".txt");
+        }
 
         return;
     });
@@ -367,32 +437,34 @@ QWidget *LP_YOLO_Helper::DockUi()
 
         mLock.lockForWrite();
 
+        double curTime = 0.0;
         if ( std::numeric_limits<int>::max() == jumpFrames){
             auto framecount = uint(mCVCam->get(cv::CAP_PROP_FRAME_COUNT));
-            mCurrentTime = (framecount - 1) * frame_msec;
+            curTime = (framecount - 1) * frame_msec;
         }else if (-std::numeric_limits<int>::max() == jumpFrames){
-            mCurrentTime = 0.0;
+            curTime = 0.0;
         }
         else{
-            mCurrentTime += jumpFrames * frame_msec;
+            curTime = mSlider->value() + jumpFrames * frame_msec;
         }
-        if ( mCurrentTime < 0.0 ){
-            mCurrentTime = 0.0;
+        if ( curTime < 0.0 ){
+            curTime = 0.0;
             QMessageBox::information(mWidget.get(), tr("Information"), tr("At beginning"));
         }
-        else if ( mCurrentTime > mTotalTime ){
+        else if ( curTime > mTotalTime ){
             auto framecount = uint(mCVCam->get(cv::CAP_PROP_FRAME_COUNT));
-            mCurrentTime = (framecount - 1) * frame_msec;
+            curTime = (framecount - 1) * frame_msec;
             QMessageBox::information(mWidget.get(), tr("Information"), tr("At end"));
         }
-        mCVCam->set(cv::CAP_PROP_POS_MSEC, mCurrentTime);
+
+        mCVCam->set(cv::CAP_PROP_POS_MSEC, curTime);
         cv::Mat frame;
         *mCVCam >> frame;
 
         mImage = toQImage(frame);
 
         mLock.unlock();
-
+        mSlider->setValue(curTime);
         emit glUpdateRequest();
     };
     connect(play, &QPushButton::clicked,
@@ -428,7 +500,7 @@ QWidget *LP_YOLO_Helper::DockUi()
                     break;
                 }
                 mImage = toQImage(frame);
-                mCurrentTime += frame_msec;
+                mSlider->setValue(mSlider->value() + frame_msec);
 
                 *mCVCam >> frame;
                 mLock.unlock();
@@ -463,7 +535,7 @@ QWidget *LP_YOLO_Helper::DockUi()
             mCVCam->read(frame);
             mLock.unlock();
 
-            const int skipFrames = 60;
+            const int skipFrames = 30;
             while (!frame.empty()){
                 mLock.lockForWrite();
                 if ( mPause ){
@@ -474,16 +546,16 @@ QWidget *LP_YOLO_Helper::DockUi()
                     break;
                 }
                 mImage = toQImage(frame);
-                mCurrentTime += frame_msec;
                 for ( auto i=0; i<skipFrames; ++i ){//Skip frames
                     mCVCam->grab();
-                    mCurrentTime += frame_msec;
+                    //mSlider->setValue(mSlider->value() + frame_msec);
                 }
                 *mCVCam >> frame;
                 mLock.unlock();
 
                 exportYOLOset();    //Export the set
 
+                mSlider->setValue(mSlider->value() + skipFrames*frame_msec);
                 QThread::usleep(1);
                 emit glUpdateRequest();
             }

@@ -353,7 +353,7 @@ void LP_MainWindow::loadPlugins(const QString &path, QMenuBar *menubar)
                         lib = QString("%1/externs/lib%2.so")
                                 .arg(folderDir.path())
                                 .arg(lib); //3rd-party should be put in "externs/"
-#elif Q_OS_WIN
+#elif defined Q_OS_WIN
                         lib = QString("%1.dll").arg(lib);
 #endif
                         QLibrary loader(lib);

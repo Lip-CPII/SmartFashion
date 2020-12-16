@@ -77,7 +77,6 @@ QWidget *LP_Plugin_PIFuHD::DockUi()
                qDebug() <<  proc.readAllStandardOutput().data();
             });
 
-
             QDir imgDir(imagePath);
             imgDir.setNameFilters({"*.jpg","*.jpeg","*.png"});
 

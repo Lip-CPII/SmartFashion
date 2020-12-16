@@ -13,6 +13,7 @@
 class QOpenGLBuffer;
 class QComboBox;
 class QLabel;
+class QSlider;
 class QOpenGLShaderProgram;
 
 class LP_YOLO_Helper : public LP_Functional
@@ -47,6 +48,7 @@ private:
     bool mInitialized = false;
     std::shared_ptr<QWidget> mWidget;
     QComboBox *mClasses;
+    QSlider *mSlider;
     QOpenGLShaderProgram *mProgram = nullptr;
     QOpenGLBuffer *mVBO;
     QOpenGLBuffer *mIndices;
