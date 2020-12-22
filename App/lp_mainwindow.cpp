@@ -20,7 +20,6 @@
 #include <QProgressBar>
 #include <QKeyEvent>
 
-
 LP_MainWindow::LP_MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::LP_MainWindow)
@@ -36,9 +35,10 @@ LP_MainWindow::LP_MainWindow(QWidget *parent)
     //Selector
     loadSelector();
 
+    qDebug()<<"Pluing check begin!";
     //Load all plugins
     loadPlugins("plugins", ui->menubar);
-
+    qDebug()<<"Pluing check finished!";
     //Undo
     loadCommandHistory();
 
@@ -47,6 +47,10 @@ LP_MainWindow::LP_MainWindow(QWidget *parent)
 
     //Doc
     loadDocuments();
+
+
+//    LP_Plugin_FunctionalMap f;
+//    f.Run();
 }
 
 LP_MainWindow::~LP_MainWindow()
@@ -356,10 +360,13 @@ void LP_MainWindow::loadPlugins(const QString &path, QMenuBar *menubar)
 #elif defined Q_OS_WIN
                         lib = QString("%1.dll").arg(lib);
 #endif
-                        QLibrary loader(lib);
-                        if ( !loader.isLoaded() && !loader.load()){
+                        QLibrary library(lib);
+                        library.setLoadHints(QLibrary::ExportExternalSymbolsHint);
+                        if ( !library.isLoaded() && !library.load()){
                             externList.close();
                             throw std::runtime_error("Failed to load library : " + lib.toStdString());
+                        }else{
+                            qDebug() << "Library loaded : " << lib;
                         }
                     }
                     externList.close();
@@ -434,8 +441,10 @@ void LP_MainWindow::loadPlugins(const QString &path, QMenuBar *menubar)
                     action->Run();
                 });
 
-                qDebug() << plugin;
+                qDebug() << "Successfully loaded plugin : " << fileName;
                 loader.unload();
+            }else{
+                qWarning() << "\n" << loader.errorString();
             }
         }
     }

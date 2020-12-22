@@ -135,3 +135,5 @@ LIBS += -L$$PWD/../../OpenCV/install/debug/bin
 INCLUDEPATH += $$PWD/../../OpenCV/install/debug/bin
 DEPENDPATH += $$PWD/../../OpenCV/install/debug/bin
 }
+
+

@@ -4,7 +4,6 @@ SUBDIRS += \
     App \
     Functional \
     LP_Plugin_Import \
-#    LP_Plugin_OpenPose \
     LP_Plugin_PIFuHD \
     Model
 

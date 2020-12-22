@@ -2,7 +2,6 @@
 #include "lp_application.h"
 
 #include <QSurfaceFormat>
-#include <QDebug>
 
 int main(int argc, char *argv[])
 {
