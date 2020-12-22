@@ -1,5 +1,9 @@
 # SmartFashion
 
+## News (17-12-2020) Added Caffe pre-trained model.
+
+ Git LFS required for repository cloning.
+
 ## News (16-11-2020) Added [PIFu HD](https://shunsukesaito.github.io/PIFuHD/) support interface as plugin example
 
 Reconstruct 3D human (mesh) from single image input. See example below.
@@ -23,7 +27,7 @@ MSVC 142 (2019) is required which can be downloaded and use for free with the [C
 
 #### _Ubuntu_
 
-Assume Git is installed. Or you may install Git by
+Assume Git with __LFS__ is installed. Or you may install Git by
 ```console
 sudo apt-get install git
 ```
