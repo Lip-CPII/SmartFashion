@@ -1,5 +1,12 @@
 # SmartFashion
 
+
+## News (22-12-2020) Added Geodesic algorithms.
+
+  Appreciation to [@mojocorp](https://github.com/mojocor/geodesic) who shared a great work.
+  
+  Welcome any contribution to implement the GUI/Functional for the algorithm.
+
 ## News (17-12-2020) Added Caffe pre-trained model.
 
  Git LFS required for repository cloning.
