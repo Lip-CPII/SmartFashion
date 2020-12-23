@@ -66,6 +66,15 @@ HEADERS += \
     extern/Geometry.h \
     extern/LBO.h \
     extern/Mesh.h \
+    extern/geodesic/geodesic_algorithm_base.h \
+    extern/geodesic/geodesic_algorithm_dijkstra.h \
+    extern/geodesic/geodesic_algorithm_exact.h \
+    extern/geodesic/geodesic_algorithm_exact_elements.h \
+    extern/geodesic/geodesic_algorithm_graph_base.h \
+    extern/geodesic/geodesic_algorithm_subdivision.h \
+    extern/geodesic/geodesic_constants.h \
+    extern/geodesic/geodesic_mesh.h \
+    extern/geodesic/geodesic_mesh_elements.h \
     plugin/lp_actionplugin.h \
     renderer/lp_glrenderer.h \
     renderer/lp_glselector.h
