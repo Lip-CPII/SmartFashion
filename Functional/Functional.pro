@@ -27,6 +27,7 @@ SOURCES += \
     Functionals/lp_file_open.cpp \
     Functionals/lp_file_save.cpp \
     Functionals/lp_functional.cpp \
+    Functionals/lp_geodesic.cpp \
     Functionals/lp_geometry_move.cpp \
     Functionals/lp_import_openmesh.cpp \
     Functionals/lp_new.cpp \
@@ -54,6 +55,7 @@ HEADERS += \
     Functionals/lp_file_save.h \
     Functionals/lp_functional.h \
     Functionals/lp_functionalregistry.h \
+    Functionals/lp_geodesic.h \
     Functionals/lp_geometry_move.h \
     Functionals/lp_import_openmesh.h \
     Functionals/lp_new.h \
