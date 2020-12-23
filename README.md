@@ -1,4 +1,4 @@
-# SmartFashion
+# SmartFashion1
 
 
 ## News (22-12-2020) Added Geodesic algorithms.
