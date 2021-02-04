@@ -3,6 +3,10 @@
 
 #include <QObject>
 #include "lp_functional.h"
+#include "extern/geodesic/geodesic_algorithm_exact.h"
+#include <QOpenGLBuffer>
+#include <QCheckBox>
+
 
 class QLabel;
 class LP_ObjectImpl;
@@ -35,15 +39,27 @@ public slots:
 
         void FunctionalRender(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebufferObject *fbo, const LP_RendererCam &cam, const QVariant &options) override;
 
+
+
 private:
         bool mInitialized = false;
+        bool geocolored = false;
         std::shared_ptr<QWidget> mWidget;
+        QLabel *mObjectid = nullptr;
         QLabel *mLabel = nullptr;
+        QCheckBox *geocheckbox = nullptr;
         QOpenGLShaderProgram *mProgram = nullptr;
         std::weak_ptr<LP_ObjectImpl> mObject;
-        std::vector<uint> mPoints;
         std::vector<uint> mFirstPoint;
         std::vector<uint> mSecondPoint;
+        std::vector<double> Points;
+        std::vector<unsigned> Faces;
+        std::vector<float> path_point;
+        std::vector<float> point_distance;
+        float length;
+        std::vector<float> field_color;
+        std::vector<float> ocolor;
+
 
 private:
         /**
