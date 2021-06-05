@@ -404,7 +404,7 @@ void LP_Pick_Feature_Points_OFF::FunctionalRender_L(QOpenGLContext *ctx, QSurfac
 
 void LP_Pick_Feature_Points_OFF::PainterDraw(QWidget *glW)
 {
-    if ( "openGLWidget_2" == glW->objectName()){
+    if ( "window_Normal" == glW->objectName()){
         return;
     }
     if ( !mCam.lock() || mVs.empty()){

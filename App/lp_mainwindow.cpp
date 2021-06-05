@@ -90,12 +90,12 @@ void LP_MainWindow::loadRenderers()
     };
 
     auto renderer = LP_GLRenderer::Create("Shade");
-    ui->openGLWidget->SetRenderer(renderer);   //Fixed NameType
-    linkWidgetRenderer(ui->openGLWidget, renderer);
+    ui->window_Shade->SetRenderer(renderer);   //Fixed NameType
+    linkWidgetRenderer(ui->window_Shade, renderer);
 
     renderer = LP_GLRenderer::Create("Normal");
-    ui->openGLWidget_2->SetRenderer(renderer);   //Fixed NameType
-    linkWidgetRenderer(ui->openGLWidget_2, renderer);
+    ui->window_Normal->SetRenderer(renderer);   //Fixed NameType
+    linkWidgetRenderer(ui->window_Normal, renderer);
 }
 
 void LP_MainWindow::loadCommandHistory()
@@ -161,13 +161,13 @@ void LP_MainWindow::loadDocuments()
     },Qt::QueuedConnection);
 
     connect(&LP_Document::gDoc, &LP_Document::requestGLSetup,
-            ui->openGLWidget->Renderer(), &LP_GLRenderer::initObjectGL);
+            ui->window_Shade->Renderer(), &LP_GLRenderer::initObjectGL);
     connect(&LP_Document::gDoc, &LP_Document::requestGLCleanup,
-            ui->openGLWidget->Renderer(), &LP_GLRenderer::destroyObjectGL);
+            ui->window_Shade->Renderer(), &LP_GLRenderer::destroyObjectGL);
     connect(&LP_Document::gDoc, &LP_Document::requestGLSetup,
-            ui->openGLWidget_2->Renderer(), &LP_GLRenderer::initObjectGL);
+            ui->window_Normal->Renderer(), &LP_GLRenderer::initObjectGL);
     connect(&LP_Document::gDoc, &LP_Document::requestGLCleanup,
-            ui->openGLWidget_2->Renderer(), &LP_GLRenderer::destroyObjectGL);
+            ui->window_Normal->Renderer(), &LP_GLRenderer::destroyObjectGL);
 
 }
 
@@ -228,8 +228,8 @@ void LP_MainWindow::loadFunctionals()
                     &LP_Functional::glContextRequest,
                     &LP_GLRenderer::GLContextRequest);
             //For left hand sided window
-            ui->openGLWidget->installEventFilter(f);
-            connect(ui->openGLWidget->Renderer(),
+            ui->window_Shade->installEventFilter(f);
+            connect(ui->window_Shade->Renderer(),
                     &LP_GLRenderer::postRender,
                     f,
                     &LP_Functional::FunctionalRender_L,
@@ -238,11 +238,11 @@ void LP_MainWindow::loadFunctionals()
                     &LP_Functional::destroyed,
                     f,
                     [this,f](){
-                        ui->openGLWidget->removeEventFilter(f);
+                        ui->window_Shade->removeEventFilter(f);
                     },Qt::DirectConnection);
             //For right hand sided window
-            ui->openGLWidget_2->installEventFilter(f);
-            connect(ui->openGLWidget_2->Renderer(),
+            ui->window_Normal->installEventFilter(f);
+            connect(ui->window_Normal->Renderer(),
                     &LP_GLRenderer::postRender,
                     f,
                     &LP_Functional::FunctionalRender_R,
@@ -251,7 +251,7 @@ void LP_MainWindow::loadFunctionals()
                     &LP_Functional::destroyed,
                     f,
                     [this,f](){
-                        ui->openGLWidget_2->removeEventFilter(f);
+                        ui->window_Normal->removeEventFilter(f);
                     },Qt::DirectConnection);
 
             LP_Functional::SetCurrent(f);
@@ -291,7 +291,8 @@ void LP_MainWindow::loadSelector()
         _func(selected, !0);
         _func(deselected, 0);
 
-        ui->openGLWidget->Renderer()->UpdateGL();
+        LP_GLRenderer::UpdateAll();
+//        ui->window_Shade->Renderer()->UpdateGL();
     });
     connect(g_GLSelector.get(),
             &LP_GLSelector::ClearSelected,
@@ -335,7 +336,7 @@ void LP_MainWindow::loadSelector()
                 o->setText(QChar(0x25CE));
                 pDoc->HideObject(oid->text());
             }
-            ui->openGLWidget->Renderer()->UpdateGL();
+            ui->window_Shade->Renderer()->UpdateGL();
         }
             break;
         default:
@@ -428,46 +429,46 @@ void LP_MainWindow::loadPlugins(const QString &path, QMenuBar *menubar)
                         ui->tabWidget->setCurrentIndex(0);
                     }
                    //For left-handside window
-                    ui->openGLWidget->installEventFilter(action);
-                    connect(ui->openGLWidget->Renderer(),
+                    ui->window_Shade->installEventFilter(action);
+                    connect(ui->window_Shade->Renderer(),
                             &LP_GLRenderer::postRender,
                             action,
                             &LP_ActionPlugin::FunctionalRender_L,
                             Qt::DirectConnection);
                     connect(action, &LP_ActionPlugin::glUpdateRequest,
-                            ui->openGLWidget->Renderer(), &LP_GLRenderer::updateGL
+                            ui->window_Shade->Renderer(), &LP_GLRenderer::updateGL
                             ,Qt::QueuedConnection);
                     connect(action,
                             &LP_ActionPlugin::glContextRequest,
-                            ui->openGLWidget->Renderer(),
+                            ui->window_Shade->Renderer(),
                             &LP_GLRenderer::glContextResponse,
                             Qt::BlockingQueuedConnection);
                     connect(action,
                             &LP_ActionPlugin::destroyed,
                             action,
                             [this,action](){
-                                ui->openGLWidget->removeEventFilter(action);
+                                ui->window_Shade->removeEventFilter(action);
                             },Qt::DirectConnection);
                     //For right-handside window
-                    ui->openGLWidget_2->installEventFilter(action);
-                    connect(ui->openGLWidget_2->Renderer(),
+                    ui->window_Normal->installEventFilter(action);
+                    connect(ui->window_Normal->Renderer(),
                             &LP_GLRenderer::postRender,
                             action,
                             &LP_ActionPlugin::FunctionalRender_R,
                             Qt::DirectConnection);
                     connect(action, &LP_ActionPlugin::glUpdateRequest,
-                            ui->openGLWidget_2->Renderer(), &LP_GLRenderer::updateGL
+                            ui->window_Normal->Renderer(), &LP_GLRenderer::updateGL
                             ,Qt::QueuedConnection);
                     connect(action,
                             &LP_ActionPlugin::glContextRequest,
-                            ui->openGLWidget_2->Renderer(),
+                            ui->window_Normal->Renderer(),
                             &LP_GLRenderer::glContextResponse,
                             Qt::BlockingQueuedConnection);
                     connect(action,
                             &LP_ActionPlugin::destroyed,
                             action,
                             [this,action](){
-                                ui->openGLWidget_2->removeEventFilter(action);
+                                ui->window_Normal->removeEventFilter(action);
                             },Qt::DirectConnection);
                     LP_Functional::SetCurrent(action);
                     action->Run();
@@ -511,6 +512,6 @@ void LP_MainWindow::keyPressEvent(QKeyEvent *event)
     if ( Qt::Key_Escape == event->key()){
         LP_Functional::ClearCurrent();
         ui->tabWidget->setCurrentIndex(0);
-        ui->openGLWidget->Renderer()->UpdateGL();
+        ui->window_Shade->Renderer()->UpdateGL();
     }
 }

@@ -72,6 +72,7 @@ QReadWriteLock &LP_GLRenderer::Lock()
 void LP_GLRenderer::UpdateGL(bool blocking)
 {
     if ( QThread::currentThread() == &mThread ){
+        qDebug() << "Dirrect update";
         updateGL();
     }else{
         QMetaObject::invokeMethod(this,"updateGL",
@@ -179,7 +180,9 @@ void LP_GLRenderer::updateGL()
         o.lock()->Draw(mContext, mSurface.get(), mFBO, mCam, option);
     }
 
+    f->glDisable( GL_DEPTH_TEST );
     g_GLSelector->DrawLabel(mContext, mSurface.get(), mFBO, mCam );
+    f->glEnable( GL_DEPTH_TEST );
 
     dLock.unlock();
 

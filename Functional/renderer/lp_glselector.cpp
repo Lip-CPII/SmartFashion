@@ -68,7 +68,6 @@ const QSet<LP_Objectw> &LP_GLSelector::Objects()
 void LP_GLSelector::DrawLabel(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebufferObject *fbo, const LP_RendererCam &cam)
 {
     Q_UNUSED(surf)
-    Q_UNUSED(fbo)
 
     auto f = ctx->extraFunctions();
     f->glEnable( GL_DEPTH_TEST );
@@ -90,7 +89,7 @@ void LP_GLSelector::DrawLabel(QOpenGLContext *ctx, QSurface *surf, QOpenGLFrameb
     mProgram->setUniformValue("m4_mvp", proj*view);
     mProgram->setUniformValue("v4_color", QVector4D(1.0f,0.1f,0.1f,0.5f));
 
-    for ( auto &o : mSelectedObjs ){
+    for ( auto &o : qAsConst(mSelectedObjs) ){
         o.lock()->DrawSelect(ctx, surf, fbo, mProgram, cam);
     }
 
@@ -165,7 +164,7 @@ void LP_GLSelector::Clip(float &sx, float &sy, int &w, int &h, int maxx, int max
 std::vector<LP_Objectw> LP_GLSelector::SelectInWorld(const QString &renderername, const QPoint &pos, int w, int h)
 {
     auto v_ = g_Renderers.find(renderername);
-    if ( g_Renderers.cend() == v_ ){
+    if ( g_Renderers.end() == v_ ){
         qDebug() << "Unknown renderer : " << renderername;
         return {};
     }
@@ -319,7 +318,7 @@ std::vector<LP_Objectw> LP_GLSelector::SelectInWorld(const QString &renderername
         l.emplace_back(pDoc->FindObject((*std::next(it,i)).lock()->Uuid()));
     }
     assert(!l.empty());
-    qDebug() << selections << l;
+    //qDebug() << selections << l;
     return l;
 }
 

@@ -68,6 +68,9 @@ bool LP_Geodesic::Run()
 
 bool LP_Geodesic::eventFilter(QObject *watched, QEvent *event)
 {
+    if ( "window_Normal" == watched->objectName()){
+        return QObject::eventFilter(watched, event);
+    } // Else
     static auto _isMesh = [](LP_Objectw obj){
         if ( obj.expired()){
             return LP_OpenMeshw();

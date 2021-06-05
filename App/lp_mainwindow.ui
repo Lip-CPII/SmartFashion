@@ -85,7 +85,7 @@ QToolTip {
          <number>0</number>
         </property>
         <item row="0" column="0">
-         <widget class="LP_OpenGLWidget" name="openGLWidget">
+         <widget class="LP_OpenGLWidget" name="window_Shade">
           <property name="focusPolicy">
            <enum>Qt::ClickFocus</enum>
           </property>
@@ -114,7 +114,7 @@ QToolTip {
          <number>0</number>
         </property>
         <item row="0" column="0">
-         <widget class="LP_OpenGLWidget" name="openGLWidget_2">
+         <widget class="LP_OpenGLWidget" name="window_Normal">
           <property name="focusPolicy">
            <enum>Qt::ClickFocus</enum>
           </property>

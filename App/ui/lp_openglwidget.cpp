@@ -181,7 +181,7 @@ void LP_OpenGLWidget::mouseReleaseEvent(QMouseEvent *event)
 {
     event->ignore();
     if ( Qt::LeftButton == event->button()){
-        QString renderer = objectName() == "openGLWidget" ? "Shade" : "Normal";//TODO non-fixed
+        QString renderer = objectName() == "window_Shade" ? "Shade" : "Normal";//TODO non-fixed
 
         if (!(( Qt::ControlModifier | Qt::ShiftModifier)
                 & event->modifiers())){
@@ -214,7 +214,7 @@ void LP_OpenGLWidget::mouseReleaseEvent(QMouseEvent *event)
 
             emit g_GLSelector->Selected(select, deselect);
 
-            mRenderer->UpdateGL();
+            //mRenderer->UpdateGL();
             event->accept();
         }
     }

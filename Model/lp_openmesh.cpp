@@ -1,6 +1,7 @@
 #include "lp_openmesh.h"
 #include "lp_renderercam.h"
 
+#include <QOpenGLFramebufferObject>
 #include <QOpenGLContext>
 #include <QOpenGLShaderProgram>
 #include <QOpenGLExtraFunctions>
@@ -55,7 +56,7 @@ void LP_OpenMeshImpl::_Dump(QDebug &debug)
 void LP_OpenMeshImpl::Draw(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebufferObject *fbo, const LP_RendererCam &cam, QVariant &option)
 {
     Q_UNUSED(surf)
-    Q_UNUSED(fbo)
+
 
     auto model = ModelTrans();
     auto proj = cam->ProjectionMatrix();
@@ -67,6 +68,8 @@ void LP_OpenMeshImpl::Draw(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebuff
         return;
     }
     auto prog = it.value();
+
+    fbo->bind();
 
     prog->bind();
     prog->setUniformValue("m4_mvp", proj*view );
@@ -137,6 +140,8 @@ void LP_OpenMeshImpl::Draw(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebuff
     mIndices->release();
 
     mProgramBoundary->release();
+
+    fbo->release();
 }
 
 

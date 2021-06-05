@@ -372,7 +372,7 @@ void LP_PoseEstimation::FunctionalRender_L(QOpenGLContext *ctx, QSurface *surf, 
 
 void LP_PoseEstimation::PainterDraw(QWidget *glW)
 {
-    if ( "openGLWidget_2" == glW->objectName()){
+    if ( "window_Normal" == glW->objectName()){
         return;
     }
     if ( mImage.isNull()){

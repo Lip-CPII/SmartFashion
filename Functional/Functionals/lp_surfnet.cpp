@@ -407,7 +407,7 @@ void LP_SURFNet::FunctionalRender_L(QOpenGLContext *ctx, QSurface *surf, QOpenGL
 
 void LP_SURFNet::PainterDraw(QWidget *glW)
 {
-    if ( "openGLWidget_2" == glW->objectName()){
+    if ( "window_Normal" == glW->objectName()){
         return;
     }
     if ( !mCam.lock() || mPoints.empty()){

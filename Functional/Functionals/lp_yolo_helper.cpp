@@ -1035,7 +1035,7 @@ bool LP_YOLO_Helper::eventFilter(QObject *watched, QEvent *event)
 
 void LP_YOLO_Helper::PainterDraw(QWidget *glW)
 {
-    if ( "openGLWidget_2" == glW->objectName()){
+    if ( "window_Normal" == glW->objectName()){
         return;
     }
     static std::function<void(int,int,float&,float&,float&)> rainbow = [](int p, int np, float&r, float&g, float&b) {    //16,777,216

@@ -90,7 +90,7 @@ bool LP_CommandGroup::eventFilter(QObject *watched, QEvent *event)
          event->type() == QEvent::Close )
     {
         if ( watched->objectName().contains("LP_MainWindow") ||
-             watched->objectName().contains("openGLWidget")){
+             watched->objectName().contains("winnndow_")){
             return QObject::eventFilter( watched, event );
         }
         return true;
