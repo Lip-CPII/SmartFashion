@@ -9,6 +9,7 @@
 #include <cmath>
 #include <memory>
 
+#include <QtConcurrent>
 #include <QOpenGLExtraFunctions>
 #include <QOpenGLContext>
 #include <QOpenGLFramebufferObject>
@@ -32,7 +33,7 @@ LP_GLRenderer::LP_GLRenderer(QObject *parent) : QObject(parent)
 LP_GLRenderer *LP_GLRenderer::Create(const QString &name)
 {
     auto it = g_Renderers.find(name);
-    if ( it != g_Renderers.cend()){
+    if ( it != g_Renderers.end()){
         return it.value();
     }
     auto renderer = new LP_GLRenderer;
@@ -43,9 +44,12 @@ LP_GLRenderer *LP_GLRenderer::Create(const QString &name)
 
 void LP_GLRenderer::UpdateAll()
 {
-    for ( auto &r : g_Renderers){
-        r->UpdateGL();
-    }
+    auto future = QtConcurrent::run(
+                [](){
+        for ( auto &r : g_Renderers){
+            r->UpdateGL(true);
+        }
+    });
 }
 
 LP_GLRenderer::~LP_GLRenderer()
@@ -72,7 +76,6 @@ QReadWriteLock &LP_GLRenderer::Lock()
 void LP_GLRenderer::UpdateGL(bool blocking)
 {
     if ( QThread::currentThread() == &mThread ){
-        qDebug() << "Dirrect update";
         updateGL();
     }else{
         QMetaObject::invokeMethod(this,"updateGL",
@@ -95,10 +98,7 @@ void LP_GLRenderer::GLContextRequest(LP_GLRenderer::EmptyCB _cb, QString name)
 void LP_GLRenderer::UpdateGL_By_Name(QString name)
 {
     if ( QString("All") == name){
-        for ( auto r : qAsConst(g_Renderers) ){
-            QMetaObject::invokeMethod(r, "updateGL",
-                                      Qt::QueuedConnection);
-        }
+        UpdateAll();
         return;
     }
     auto it = g_Renderers.find(name);

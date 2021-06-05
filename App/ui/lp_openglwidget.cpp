@@ -188,7 +188,7 @@ void LP_OpenGLWidget::mouseReleaseEvent(QMouseEvent *event)
             emit g_GLSelector->ClearSelected();
         }
         //Perform selection
-        auto objs = g_GLSelector->SelectInWorld(renderer, event->pos());
+        std::vector<LP_Objectw> objs = g_GLSelector->SelectInWorld(renderer, event->pos());
 
 //        QMetaObject::invokeMethod(g_GLSelector.get(),
 //                                  "SelectInWorld",

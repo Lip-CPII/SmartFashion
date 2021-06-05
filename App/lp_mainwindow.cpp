@@ -270,7 +270,7 @@ void LP_MainWindow::loadSelector()
     }
     connect(pSelector, &QItemSelectionModel::selectionChanged,
             [this](const QItemSelection &selected, const QItemSelection &deselected){
-        //qDebug() << selected << " " << deselected;
+
         auto pM = qobject_cast<QStandardItemModel*>(ui->treeView->model());
         if ( !pM ){
             return;
@@ -292,7 +292,6 @@ void LP_MainWindow::loadSelector()
         _func(deselected, 0);
 
         LP_GLRenderer::UpdateAll();
-//        ui->window_Shade->Renderer()->UpdateGL();
     });
     connect(g_GLSelector.get(),
             &LP_GLSelector::ClearSelected,
@@ -316,6 +315,7 @@ void LP_MainWindow::loadSelector()
             }
         };
 
+        //qDebug() << selected << " " << deselected;
         _func( selected, QItemSelectionModel::Rows | QItemSelectionModel::Select);
         _func( deselected, QItemSelectionModel::Rows | QItemSelectionModel::Deselect);
     });
@@ -428,6 +428,14 @@ void LP_MainWindow::loadPlugins(const QString &path, QMenuBar *menubar)
                     }else{
                         ui->tabWidget->setCurrentIndex(0);
                     }
+
+                    //For all windows
+                    connect(action,
+                            &LP_Functional::glUpdateRequest,
+                            &LP_GLRenderer::UpdateGL_By_Name);
+                    connect(action,
+                            &LP_Functional::glContextRequest,
+                            &LP_GLRenderer::GLContextRequest);
                    //For left-handside window
                     ui->window_Shade->installEventFilter(action);
                     connect(ui->window_Shade->Renderer(),
@@ -435,14 +443,6 @@ void LP_MainWindow::loadPlugins(const QString &path, QMenuBar *menubar)
                             action,
                             &LP_ActionPlugin::FunctionalRender_L,
                             Qt::DirectConnection);
-                    connect(action, &LP_ActionPlugin::glUpdateRequest,
-                            ui->window_Shade->Renderer(), &LP_GLRenderer::updateGL
-                            ,Qt::QueuedConnection);
-                    connect(action,
-                            &LP_ActionPlugin::glContextRequest,
-                            ui->window_Shade->Renderer(),
-                            &LP_GLRenderer::glContextResponse,
-                            Qt::BlockingQueuedConnection);
                     connect(action,
                             &LP_ActionPlugin::destroyed,
                             action,
@@ -456,14 +456,6 @@ void LP_MainWindow::loadPlugins(const QString &path, QMenuBar *menubar)
                             action,
                             &LP_ActionPlugin::FunctionalRender_R,
                             Qt::DirectConnection);
-                    connect(action, &LP_ActionPlugin::glUpdateRequest,
-                            ui->window_Normal->Renderer(), &LP_GLRenderer::updateGL
-                            ,Qt::QueuedConnection);
-                    connect(action,
-                            &LP_ActionPlugin::glContextRequest,
-                            ui->window_Normal->Renderer(),
-                            &LP_GLRenderer::glContextResponse,
-                            Qt::BlockingQueuedConnection);
                     connect(action,
                             &LP_ActionPlugin::destroyed,
                             action,
