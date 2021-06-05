@@ -24,7 +24,7 @@ public:
     bool Run();
 
 public slots:
-    void FunctionalRender(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebufferObject *fbo, const LP_RendererCam &cam, const QVariant &options);
+    void FunctionalRender_L(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebufferObject *fbo, const LP_RendererCam &cam, const QVariant &options);
     void PainterDraw(QWidget *glW);
 
 protected:

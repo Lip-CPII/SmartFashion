@@ -40,7 +40,7 @@ private:
 
     // LP_Functional interface
 public slots:
-    void FunctionalRender(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebufferObject *fbo, const LP_RendererCam &cam, const QVariant &options);
+    void FunctionalRender_L(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebufferObject *fbo, const LP_RendererCam &cam, const QVariant &options);
 };
 
 #endif // LP_GEOMETRY_MOVE_H

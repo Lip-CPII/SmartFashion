@@ -57,7 +57,7 @@ public:
      * necessarily monotonic, e.g. No intermediate interaction
      * with the main application content, like New, Import, Open etc.
      * If they are monotonic, only Run() is needed while DockUi() and
-     * FunctionalRender() can be left without implementation.
+     * FunctionalRender_L() can be left without implementation.
      * @return true if execution is successful.
      */
     virtual bool Run() = 0;
@@ -72,7 +72,15 @@ public:
     }
 
 public slots:
-    virtual void FunctionalRender(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebufferObject *fbo,
+    virtual void FunctionalRender_L(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebufferObject *fbo,
+                              const LP_RendererCam &cam, const QVariant &options){
+        Q_UNUSED(ctx);
+        Q_UNUSED(surf);
+        Q_UNUSED(cam);
+        Q_UNUSED(fbo);
+        Q_UNUSED(options);
+    };
+    virtual void FunctionalRender_R(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebufferObject *fbo,
                               const LP_RendererCam &cam, const QVariant &options){
         Q_UNUSED(ctx);
         Q_UNUSED(surf);
@@ -93,14 +101,22 @@ signals:
      * if something is added/require-display in/to the 3D scene
      * by this functional. E.g. mesh vertices in LP_Pick_Feature_Point.
      */
-    void glUpdateRequest();
+    void glUpdateRequest(QString id = "All");
 
     /**
-     * @brief glContextRequest Mostly be used in destructor
+     * @brief glContextRequest. Mostly be used in destructor
+     * for cleaning up and OpenGL resources created in
+     * FunctionalRender()
+     * wID stands for the render ID
+     */
+    void glContextRequest(GLDestroy_CB, QString id = "Shade");
+
+    /**
+     * @brief glContextRequest for right window Mostly be used in destructor
      * for cleaning up and OpenGL resources created in
      * FunctionalRender()
      */
-    void glContextRequest(GLDestroy_CB);
+    void glContextRequest_R(GLDestroy_CB);
 
     /**
      * @brief uiUpdateProgress

@@ -401,7 +401,7 @@ bool LP_OpenMeshImpl::DrawCleanUp(QOpenGLContext *ctx, QSurface *surf)
         mIndices = nullptr;
     }
 
-    for ( auto p : mPrograms ){
+    for ( auto p : qAsConst(mPrograms) ){
         p->release();
         delete p;
     }

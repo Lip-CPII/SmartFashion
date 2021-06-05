@@ -53,7 +53,7 @@ public slots:
      *
      * Please reference the implementation as an example of usage.
      */
-    void FunctionalRender(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebufferObject *fbo, const LP_RendererCam &cam, const QVariant &options) override;
+    void FunctionalRender_L(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebufferObject *fbo, const LP_RendererCam &cam, const QVariant &options) override;
     void PainterDraw(QWidget *glW) override;
 
 private:

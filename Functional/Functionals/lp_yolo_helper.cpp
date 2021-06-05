@@ -580,7 +580,7 @@ bool LP_YOLO_Helper::Run()
     return false;
 }
 
-void LP_YOLO_Helper::FunctionalRender(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebufferObject *fbo, const LP_RendererCam &cam, const QVariant &options)
+void LP_YOLO_Helper::FunctionalRender_L(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebufferObject *fbo, const LP_RendererCam &cam, const QVariant &options)
 {
     Q_UNUSED(surf)  //Mostly not used within a Functional.
     Q_UNUSED(options)   //Not used in this functional.

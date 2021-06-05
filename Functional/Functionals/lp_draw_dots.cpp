@@ -84,8 +84,9 @@ QWidget *LP_Draw_Dots::DockUi()
 
     mWidget->setLayout(layout);
 
-    connect(slider, &QSlider::valueChanged,
-            this, &LP_Functional::glUpdateRequest);
+    connect(slider, &QSlider::valueChanged, [this](){
+        emit glUpdateRequest();
+    });
 
     return mWidget.get();
 }
@@ -96,7 +97,7 @@ bool LP_Draw_Dots::Run()
     return false;
 }
 
-void LP_Draw_Dots::FunctionalRender(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebufferObject *fbo, const LP_RendererCam &cam, const QVariant &options)
+void LP_Draw_Dots::FunctionalRender_L(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebufferObject *fbo, const LP_RendererCam &cam, const QVariant &options)
 {
     Q_UNUSED(cam)
     Q_UNUSED(surf)  //Mostly not used within a Functional.

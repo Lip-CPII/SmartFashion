@@ -56,6 +56,14 @@ public:
      */
     void UpdateGL(bool blocking = false);
 
+    /**
+     * @brief GLContextRequest
+     * @param _cb
+     * @param id The renderer id "Name" during creation
+     */
+    static void GLContextRequest(EmptyCB _cb, QString name);
+    static void UpdateGL_By_Name(QString name="All");
+
 public slots:
     void initGL(QOpenGLContext *context);
     void reshapeGL(int w, int h);
@@ -65,6 +73,7 @@ public slots:
     void destroyObjectGL(LP_Objectw o);
     void updateTarget();
     void glContextResponse(EmptyCB _cb);
+
 
 signals:
     void textureUpdated(QImage);

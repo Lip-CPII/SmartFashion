@@ -37,18 +37,20 @@ signals:
         // LP_Functional interface
 public slots:
 
-        void FunctionalRender(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebufferObject *fbo, const LP_RendererCam &cam, const QVariant &options) override;
-
+        void FunctionalRender_L(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebufferObject *fbo, const LP_RendererCam &cam, const QVariant &options) override;
+        void FunctionalRender_R(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebufferObject *fbo, const LP_RendererCam &cam, const QVariant &options) override;
 
 
 private:
-        bool mInitialized = false;
+        bool mInitialized_L = false;
+        bool mInitialized_R = false;
         bool geocolored = false;
         std::shared_ptr<QWidget> mWidget;
         QLabel *mObjectid = nullptr;
         QLabel *mLabel = nullptr;
         QCheckBox *geocheckbox = nullptr;
-        QOpenGLShaderProgram *mProgram = nullptr;
+        QOpenGLShaderProgram *mProgram_L = nullptr,
+                             *mProgram_R = nullptr;
         std::weak_ptr<LP_ObjectImpl> mObject;
         std::vector<uint> mFirstPoint;
         std::vector<uint> mSecondPoint;
@@ -65,7 +67,8 @@ private:
         /**
          * @brief initializeGL initalize any OpenGL resource
          */
-void initializeGL();
+void initializeGL_L();
+void initializeGL_R();
 };
 
 #endif // LP_GEODESIC_H

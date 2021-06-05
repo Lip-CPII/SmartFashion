@@ -282,7 +282,7 @@ bool LP_Pick_Feature_Points::eventFilter(QObject *watched, QEvent *event)
 }
 
 
-void LP_Pick_Feature_Points::FunctionalRender(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebufferObject *fbo, const LP_RendererCam &cam, const QVariant &options)
+void LP_Pick_Feature_Points::FunctionalRender_L(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebufferObject *fbo, const LP_RendererCam &cam, const QVariant &options)
 {
     Q_UNUSED(surf)  //Mostly not used within a Functional.
     Q_UNUSED(options)   //Not used in this functional.

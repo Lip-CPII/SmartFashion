@@ -173,7 +173,7 @@ void LP_Geometry_Move::initializeGL()
     mInitialized = true;
 }
 
-void LP_Geometry_Move::FunctionalRender(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebufferObject *fbo, const LP_RendererCam &cam, const QVariant &options)
+void LP_Geometry_Move::FunctionalRender_L(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebufferObject *fbo, const LP_RendererCam &cam, const QVariant &options)
 {
     if ( !mInitialized ){
         initializeGL();

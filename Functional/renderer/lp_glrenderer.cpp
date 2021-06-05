@@ -79,6 +79,36 @@ void LP_GLRenderer::UpdateGL(bool blocking)
     }
 }
 
+void LP_GLRenderer::GLContextRequest(LP_GLRenderer::EmptyCB _cb, QString name)
+{
+    auto it = g_Renderers.find(name);
+    if ( it == g_Renderers.end()){
+        qDebug() << "No such renderer : " << name;
+        return;
+    }
+    QMetaObject::invokeMethod(*it, "glContextResponse",
+                              Qt::BlockingQueuedConnection,
+                              Q_ARG(EmptyCB, _cb));
+}
+
+void LP_GLRenderer::UpdateGL_By_Name(QString name)
+{
+    if ( QString("All") == name){
+        for ( auto r : qAsConst(g_Renderers) ){
+            QMetaObject::invokeMethod(r, "updateGL",
+                                      Qt::QueuedConnection);
+        }
+        return;
+    }
+    auto it = g_Renderers.find(name);
+    if ( it == g_Renderers.end()){
+        qDebug() << "No such renderer : " << name;
+        return;
+    }
+    QMetaObject::invokeMethod(*it, "updateGL",
+                              Qt::QueuedConnection);
+}
+
 void LP_GLRenderer::initGL(QOpenGLContext *context)
 {
     Q_ASSERT(mSurface);

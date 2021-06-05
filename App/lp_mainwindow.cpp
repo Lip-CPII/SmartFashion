@@ -220,27 +220,39 @@ void LP_MainWindow::loadFunctionals()
                 ui->tabWidget->setCurrentIndex(0);
             }
 
+            //For all windows
+            connect(f,
+                    &LP_Functional::glUpdateRequest,
+                    &LP_GLRenderer::UpdateGL_By_Name);
+            connect(f,
+                    &LP_Functional::glContextRequest,
+                    &LP_GLRenderer::GLContextRequest);
+            //For left hand sided window
             ui->openGLWidget->installEventFilter(f);
             connect(ui->openGLWidget->Renderer(),
                     &LP_GLRenderer::postRender,
                     f,
-                    &LP_Functional::FunctionalRender,
+                    &LP_Functional::FunctionalRender_L,
                     Qt::DirectConnection);
-            connect(f, &LP_Functional::glUpdateRequest,
-                    ui->openGLWidget->Renderer(), &LP_GLRenderer::updateGL
-                    ,Qt::QueuedConnection);
-            connect(f,
-                    &LP_Functional::glContextRequest,
-                    ui->openGLWidget->Renderer(),
-                    &LP_GLRenderer::glContextResponse,
-                    Qt::BlockingQueuedConnection);
             connect(f,
                     &LP_Functional::destroyed,
                     f,
                     [this,f](){
                         ui->openGLWidget->removeEventFilter(f);
                     },Qt::DirectConnection);
-
+            //For right hand sided window
+            ui->openGLWidget_2->installEventFilter(f);
+            connect(ui->openGLWidget_2->Renderer(),
+                    &LP_GLRenderer::postRender,
+                    f,
+                    &LP_Functional::FunctionalRender_R,
+                    Qt::DirectConnection);
+            connect(f,
+                    &LP_Functional::destroyed,
+                    f,
+                    [this,f](){
+                        ui->openGLWidget_2->removeEventFilter(f);
+                    },Qt::DirectConnection);
 
             LP_Functional::SetCurrent(f);
 
@@ -415,13 +427,12 @@ void LP_MainWindow::loadPlugins(const QString &path, QMenuBar *menubar)
                     }else{
                         ui->tabWidget->setCurrentIndex(0);
                     }
-
+                   //For left-handside window
                     ui->openGLWidget->installEventFilter(action);
-
                     connect(ui->openGLWidget->Renderer(),
                             &LP_GLRenderer::postRender,
                             action,
-                            &LP_ActionPlugin::FunctionalRender,
+                            &LP_ActionPlugin::FunctionalRender_L,
                             Qt::DirectConnection);
                     connect(action, &LP_ActionPlugin::glUpdateRequest,
                             ui->openGLWidget->Renderer(), &LP_GLRenderer::updateGL
@@ -436,6 +447,27 @@ void LP_MainWindow::loadPlugins(const QString &path, QMenuBar *menubar)
                             action,
                             [this,action](){
                                 ui->openGLWidget->removeEventFilter(action);
+                            },Qt::DirectConnection);
+                    //For right-handside window
+                    ui->openGLWidget_2->installEventFilter(action);
+                    connect(ui->openGLWidget_2->Renderer(),
+                            &LP_GLRenderer::postRender,
+                            action,
+                            &LP_ActionPlugin::FunctionalRender_R,
+                            Qt::DirectConnection);
+                    connect(action, &LP_ActionPlugin::glUpdateRequest,
+                            ui->openGLWidget_2->Renderer(), &LP_GLRenderer::updateGL
+                            ,Qt::QueuedConnection);
+                    connect(action,
+                            &LP_ActionPlugin::glContextRequest,
+                            ui->openGLWidget_2->Renderer(),
+                            &LP_GLRenderer::glContextResponse,
+                            Qt::BlockingQueuedConnection);
+                    connect(action,
+                            &LP_ActionPlugin::destroyed,
+                            action,
+                            [this,action](){
+                                ui->openGLWidget_2->removeEventFilter(action);
                             },Qt::DirectConnection);
                     LP_Functional::SetCurrent(action);
                     action->Run();

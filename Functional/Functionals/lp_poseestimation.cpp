@@ -354,7 +354,7 @@ bool LP_PoseEstimation::Run()
     return false;
 }
 
-void LP_PoseEstimation::FunctionalRender(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebufferObject *fbo, const LP_RendererCam &cam, const QVariant &options)
+void LP_PoseEstimation::FunctionalRender_L(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebufferObject *fbo, const LP_RendererCam &cam, const QVariant &options)
 {
     Q_UNUSED(ctx)
     Q_UNUSED(surf)

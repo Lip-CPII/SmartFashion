@@ -160,7 +160,7 @@ bool LP_Plugin_PIFuHD::Run()
     return false;
 }
 
-void LP_Plugin_PIFuHD::FunctionalRender(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebufferObject *fbo, const LP_RendererCam &cam, const QVariant &options)
+void LP_Plugin_PIFuHD::FunctionalRender_L(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebufferObject *fbo, const LP_RendererCam &cam, const QVariant &options)
 {
     Q_UNUSED(surf)
     Q_UNUSED(options)

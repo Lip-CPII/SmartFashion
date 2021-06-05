@@ -27,10 +27,15 @@ LP_Geodesic::LP_Geodesic(QObject *parent) : LP_Functional(parent)
 LP_Geodesic::~LP_Geodesic()
 {
     emit glContextRequest([this](){
-        delete mProgram;
-        mProgram = nullptr;
-    });
-    Q_ASSERT(!mProgram);
+        delete mProgram_L;
+        mProgram_L = nullptr;
+    }, "Shade");
+    emit glContextRequest([this](){
+        delete mProgram_R;
+        mProgram_R = nullptr;
+    }, "Normal");
+    Q_ASSERT(!mProgram_L);
+    Q_ASSERT(!mProgram_R);
 }
 
 QWidget *LP_Geodesic::DockUi()
@@ -263,19 +268,19 @@ bool LP_Geodesic::eventFilter(QObject *watched, QEvent *event)
 }
 
 
-void LP_Geodesic::FunctionalRender(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebufferObject *fbo, const LP_RendererCam &cam, const QVariant &options)
+void LP_Geodesic::FunctionalRender_L(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebufferObject *fbo, const LP_RendererCam &cam, const QVariant &options)
 {
 
     Q_UNUSED(surf)  //Mostly not used within a Functional.
 //    Q_UNUSED(options)   //Not used in this functional.
 
-    if ( !mInitialized ){   //The OpenGL resources, e.g. Shader, not initilized
-        initializeGL();     //Call the initialize member function.
+
+    if ( !mInitialized_L ){   //The OpenGL resources, e.g. Shader, not initilized
+        initializeGL_L();     //Call the initialize member function.
     }                       //Not compulsory, (Using member function for cleaness only)
     if ( !mObject.lock()){
         return;             //If not mesh is picked, return. mObject is a weak pointer
     }                       //to a LP_OpenMesh.
-
 
     auto proj = cam->ProjectionMatrix(),    //Get the projection matrix of the 3D view
          view = cam->ViewMatrix();          //Get the view matrix of the 3D view
@@ -286,17 +291,17 @@ void LP_Geodesic::FunctionalRender(QOpenGLContext *ctx, QSurface *surf, QOpenGLF
     f->glEnable(GL_PROGRAM_POINT_SIZE);     //Enable point-size controlled by shader
     f->glEnable(GL_DEPTH_TEST);             //Enable depth test
 
-    mProgram->bind();                       //Bind the member shader to the context
-    mProgram->setUniformValue("m4_mvp", proj * view );  //Set the Model-View-Projection matrix
-    mProgram->setUniformValue("f_pointSize", 7.0f);     //Set the point-size which is enabled before
-    mProgram->setUniformValue("v4_color", QVector4D( 0.3f, 1.0f, 0.3f, 0.6f )); //Set the point color
+    mProgram_L->bind();                       //Bind the member shader to the context
+    mProgram_L->setUniformValue("m4_mvp", proj * view );  //Set the Model-View-Projection matrix
+    mProgram_L->setUniformValue("f_pointSize", 7.0f);     //Set the point-size which is enabled before
+    mProgram_L->setUniformValue("v4_color", QVector4D( 0.3f, 1.0f, 0.3f, 0.6f )); //Set the point color
 
 
     //Get the actual open-mesh data from the LP_OpenMesh class
     auto m = std::static_pointer_cast<LP_OpenMeshImpl>(mObject.lock())->Mesh();
 
-    mProgram->enableAttributeArray("a_pos");        //Enable the "a_pos" attribute buffer of the shader
-    mProgram->setAttributeArray("a_pos",m->points()->data(),3); //Set the buffer data of "a_pos"
+    mProgram_L->enableAttributeArray("a_pos");        //Enable the "a_pos" attribute buffer of the shader
+    mProgram_L->setAttributeArray("a_pos",m->points()->data(),3); //Set the buffer data of "a_pos"
 
     if ( point_distance.empty()){
         f->glDrawArrays(GL_POINTS, 0, GLsizei(m->n_vertices()));    //Actually draw all the points
@@ -304,21 +309,21 @@ void LP_Geodesic::FunctionalRender(QOpenGLContext *ctx, QSurface *surf, QOpenGLF
 
 
     if ( !mFirstPoint.empty()){
-        mProgram->setUniformValue("f_pointSize", 13.0f);
-        mProgram->setUniformValue("v4_color", QVector4D( 1.0f, 0.2f, 0.1f, 1.0f ));
+        mProgram_L->setUniformValue("f_pointSize", 13.0f);
+        mProgram_L->setUniformValue("v4_color", QVector4D( 1.0f, 0.2f, 0.1f, 1.0f ));
         // ONLY draw the picked vertices again
         f->glDrawElements(GL_POINTS, GLsizei(mFirstPoint.size()), GL_UNSIGNED_INT, mFirstPoint.data());
     }
 
     if ( !mSecondPoint.empty()){
-        mProgram->setUniformValue("f_pointSize", 13.0f);
-        mProgram->setUniformValue("v4_color", QVector4D( 1.0f, 0.2f, 0.1f, 1.0f ));
+        mProgram_L->setUniformValue("f_pointSize", 13.0f);
+        mProgram_L->setUniformValue("v4_color", QVector4D( 1.0f, 0.2f, 0.1f, 1.0f ));
         // ONLY draw the picked vertices again
         f->glDrawElements(GL_POINTS, GLsizei(mSecondPoint.size()), GL_UNSIGNED_INT, mSecondPoint.data());
     }
 
     if ( !path_point.empty()){
-        mProgram->setAttributeArray("a_pos", path_point.data(), 3); //Set the buffer data of "a_pos"
+        mProgram_L->setAttributeArray("a_pos", path_point.data(), 3); //Set the buffer data of "a_pos"
         f->glLineWidth(10.0f);
         f->glDrawArrays(GL_LINE_STRIP, 0, path_point.size()/3);
     }
@@ -370,7 +375,6 @@ void LP_Geodesic::FunctionalRender(QOpenGLContext *ctx, QSurface *surf, QOpenGLF
 
         if(geocolored == false){
             emit glUpdateRequest();
-            emit glUpdateRequest();
         }
 
         geocolored = true;
@@ -402,7 +406,6 @@ void LP_Geodesic::FunctionalRender(QOpenGLContext *ctx, QSurface *surf, QOpenGLF
 
         if(geocolored == true){
             emit glUpdateRequest();
-            emit glUpdateRequest();
         }
         else if(field_color.empty()){
             ocolor.clear();
@@ -413,22 +416,92 @@ void LP_Geodesic::FunctionalRender(QOpenGLContext *ctx, QSurface *surf, QOpenGLF
     }
 
 
-    mProgram->disableAttributeArray("a_pos");   //Disable the "a_pos" buffer
+    mProgram_L->disableAttributeArray("a_pos");   //Disable the "a_pos" buffer
 
-    mProgram->release();                        //Release the shader from the context
+    mProgram_L->release();                        //Release the shader from the context
 
     fbo->release();
     f->glDisable(GL_PROGRAM_POINT_SIZE);
     f->glDisable(GL_DEPTH_TEST);
 }
 
-
-
-
-
-void LP_Geodesic::initializeGL()
+void LP_Geodesic::FunctionalRender_R(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebufferObject *fbo, const LP_RendererCam &cam, const QVariant &options)
 {
+    Q_UNUSED(surf)  //Mostly not used within a Functional.
+//    Q_UNUSED(options)   //Not used in this functional.
 
+
+    if ( !mInitialized_R ){   //The OpenGL resources, e.g. Shader, not initilized
+        initializeGL_R();     //Call the initialize member function.
+    }                       //Not compulsory, (Using member function for cleaness only)
+    if ( !mObject.lock()){
+        return;             //If not mesh is picked, return. mObject is a weak pointer
+    }                       //to a LP_OpenMesh.
+
+    auto proj = cam->ProjectionMatrix(),    //Get the projection matrix of the 3D view
+         view = cam->ViewMatrix();          //Get the view matrix of the 3D view
+
+    auto f = ctx->extraFunctions();         //Get the OpenGL functions container
+
+    if ( !field_color.empty() && geocheckbox->isChecked() ){   // Draw the distance field
+        auto mesh = std::static_pointer_cast<LP_OpenMeshImpl>(mObject.lock());
+
+        QVariant opt = options;
+        mesh->DrawSetup(ctx, surf, opt);
+    }   else if( !ocolor.empty() && (field_color.empty() || !geocheckbox->isChecked()) ){ // Draw the original colors
+        auto mesh = std::static_pointer_cast<LP_OpenMeshImpl>(mObject.lock());
+
+        QVariant opt = options;
+        mesh->DrawSetup(ctx, surf, opt);
+    }
+    fbo->bind();
+    f->glEnable(GL_PROGRAM_POINT_SIZE);     //Enable point-size controlled by shader
+    f->glEnable(GL_DEPTH_TEST);             //Enable depth test
+
+    mProgram_R->bind();                       //Bind the member shader to the context
+    mProgram_R->setUniformValue("m4_mvp", proj * view );  //Set the Model-View-Projection matrix
+    mProgram_R->setUniformValue("f_pointSize", 3.0f);     //Set the point-size which is enabled before
+
+
+    //Get the actual open-mesh data from the LP_OpenMesh class
+    auto m = std::static_pointer_cast<LP_OpenMeshImpl>(mObject.lock())->Mesh();
+
+    mProgram_R->enableAttributeArray("a_pos");        //Enable the "a_pos" attribute buffer of the shader
+    mProgram_R->setAttributeArray("a_pos",m->points()->data(),3); //Set the buffer data of "a_pos"
+
+    if ( !mFirstPoint.empty()){
+        mProgram_R->setUniformValue("f_pointSize", 8.0f);
+        mProgram_R->setUniformValue("v4_color", QVector4D( 1.0f, 0.2f, 0.1f, 1.0f ));
+        // ONLY draw the picked vertices again
+        f->glDrawElements(GL_POINTS, GLsizei(mFirstPoint.size()), GL_UNSIGNED_INT, mFirstPoint.data());
+    }
+
+    if ( !mSecondPoint.empty()){
+        mProgram_R->setUniformValue("f_pointSize", 8.0f);
+        mProgram_R->setUniformValue("v4_color", QVector4D( 1.0f, 0.2f, 0.1f, 1.0f ));
+        // ONLY draw the picked vertices again
+        f->glDrawElements(GL_POINTS, GLsizei(mSecondPoint.size()), GL_UNSIGNED_INT, mSecondPoint.data());
+    }
+
+    if ( !path_point.empty()){
+        mProgram_R->setAttributeArray("a_pos", path_point.data(), 3); //Set the buffer data of "a_pos"
+        mProgram_R->setUniformValue("v4_color", QVector4D( 1.0f, 0.9f, 0.1f, 1.0f ));
+        f->glLineWidth(5.0f);
+        f->glDrawArrays(GL_LINE_STRIP, 0, path_point.size()/3);
+    }
+
+
+    mProgram_R->disableAttributeArray("a_pos");   //Disable the "a_pos" buffer
+
+    mProgram_R->release();                        //Release the shader from the context
+
+    fbo->release();
+    f->glDisable(GL_PROGRAM_POINT_SIZE);
+    f->glDisable(GL_DEPTH_TEST);
+}
+
+void LP_Geodesic::initializeGL_R()
+{
     std::string vsh, fsh;
 
         vsh =
@@ -453,8 +526,40 @@ void LP_Geodesic::initializeGL()
         return;
     }
 
-    mProgram = prog;            //If everything is fine, assign to the member variable
+    mProgram_R = prog;            //If everything is fine, assign to the member variable
 
-    mInitialized = true;
+    mInitialized_R = true;
+}
+
+void LP_Geodesic::initializeGL_L()
+{
+
+        std::string vsh, fsh;
+
+            vsh =
+                "attribute vec3 a_pos;\n"       //The position of a point in 3D that used in FunctionRender()
+                "uniform mat4 m4_mvp;\n"        //The Model-View-Matrix
+                "uniform float f_pointSize;\n"  //Point size determined in FunctionRender()
+                "void main(){\n"
+                "   gl_Position = m4_mvp * vec4(a_pos, 1.0);\n" //Output the OpenGL position
+                "   gl_PointSize = f_pointSize;\n"
+                "}";
+            fsh =
+                "uniform vec4 v4_color;\n"       //Defined the point color variable that will be set in FunctionRender()
+                "void main(){\n"
+                "   gl_FragColor = v4_color;\n" //Output the fragment color;
+                "}";
+
+        auto prog = new QOpenGLShaderProgram;   //Intialize the Shader with the above GLSL codes
+        prog->addShaderFromSourceCode(QOpenGLShader::Vertex,vsh.c_str());
+        prog->addShaderFromSourceCode(QOpenGLShader::Fragment,fsh.data());
+        if (!prog->create() || !prog->link()){  //Check whether the GLSL codes are valid
+            qDebug() << prog->log();
+            return;
+        }
+
+        mProgram_L = prog;            //If everything is fine, assign to the member variable
+
+        mInitialized_L = true;
 }
 
