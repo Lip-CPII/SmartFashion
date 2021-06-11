@@ -112,13 +112,6 @@ signals:
     void glContextRequest(GLDestroy_CB, QString id = "Shade");
 
     /**
-     * @brief glContextRequest for right window Mostly be used in destructor
-     * for cleaning up and OpenGL resources created in
-     * FunctionalRender()
-     */
-    void glContextRequest_R(GLDestroy_CB);
-
-    /**
      * @brief uiUpdateProgress
      * Show the progress of any progress requires a progress bar
      */

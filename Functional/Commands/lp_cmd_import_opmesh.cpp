@@ -57,6 +57,7 @@ void LP_Cmd_Import_OpMesh::redo()
         mStatus = -1;
         setObsolete(true);
         //gLogger->Log(QObject::tr("%1 - Corrupted or invalid file").arg(text()),10);
+        qDebug() << QString("Import failed #v: %1, #e: %2,, #f: %3").arg(nv).arg(ne).arg(nf);
         return;
     }
 
@@ -176,7 +177,6 @@ bool LP_Cmd_Import_OpMesh::Save(QDataStream &o) const
 
 bool LP_Cmd_Import_OpMesh::Load(QDataStream &in)
 {
-    QString tmp;
     QMap<QString, QVariant> map;
     in >> map;
 

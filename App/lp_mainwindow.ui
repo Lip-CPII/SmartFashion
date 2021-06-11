@@ -177,11 +177,18 @@ QMenu::item:disabled {
      <addaction name="separator"/>
      <addaction name="lp_import_openmesh"/>
     </widget>
+    <widget class="QMenu" name="menuExport">
+     <property name="title">
+      <string>Export</string>
+     </property>
+     <addaction name="lp_export_obj"/>
+    </widget>
     <addaction name="lp_new"/>
     <addaction name="lp_file_open"/>
     <addaction name="lp_file_save"/>
     <addaction name="separator"/>
     <addaction name="menuImport"/>
+    <addaction name="menuExport"/>
    </widget>
    <widget class="QMenu" name="menuEdit">
     <property name="title">
@@ -433,6 +440,11 @@ QUndoView::item:hover {
   <action name="lp_file_save">
    <property name="text">
     <string>Save</string>
+   </property>
+  </action>
+  <action name="lp_export_obj">
+   <property name="text">
+    <string>Wavefront (obj)</string>
    </property>
   </action>
  </widget>

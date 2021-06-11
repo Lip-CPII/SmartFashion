@@ -15,6 +15,7 @@ SOURCES += \
     lp_model.cpp \
     lp_object.cpp \
     lp_openmesh.cpp \
+    lp_pointcloud.cpp \
     lp_renderercam.cpp
 
 HEADERS += \
@@ -24,6 +25,7 @@ HEADERS += \
     lp_model.h \
     lp_object.h \
     lp_openmesh.h \
+    lp_pointcloud.h \
     lp_renderercam.h
 
 # Default rules for deployment.

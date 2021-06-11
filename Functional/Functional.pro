@@ -19,17 +19,21 @@ DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs depr
 
 SOURCES += \
     Commands/lp_cmd_addentity.cpp \
+    Commands/lp_cmd_export_obj.cpp \
     Commands/lp_cmd_import_opmesh.cpp \
+    Commands/lp_cmd_import_pointcloud.cpp \
     Commands/lp_cmd_transform.cpp \
     Commands/lp_command.cpp \
     Commands/lp_commandmanager.cpp \
     Functionals/lp_draw_dots.cpp \
+    Functionals/lp_export_obj.cpp \
     Functionals/lp_file_open.cpp \
     Functionals/lp_file_save.cpp \
     Functionals/lp_functional.cpp \
     Functionals/lp_geodesic.cpp \
     Functionals/lp_geometry_move.cpp \
     Functionals/lp_import_openmesh.cpp \
+    Functionals/lp_import_pointcloud.cpp \
     Functionals/lp_new.cpp \
     Functionals/lp_pick_feature_points.cpp \
     Functionals/lp_pick_feature_points_off.cpp \
@@ -45,12 +49,15 @@ SOURCES += \
 
 HEADERS += \
     Commands/lp_cmd_addentity.h \
+    Commands/lp_cmd_export_obj.h \
     Commands/lp_cmd_import_opmesh.h \
+    Commands/lp_cmd_import_pointcloud.h \
     Commands/lp_cmd_transform.h \
     Commands/lp_command.h \
     Commands/lp_commandmanager.h \
     Functional_global.h \
     Functionals/lp_draw_dots.h \
+    Functionals/lp_export_obj.h \
     Functionals/lp_file_open.h \
     Functionals/lp_file_save.h \
     Functionals/lp_functional.h \
@@ -58,6 +65,7 @@ HEADERS += \
     Functionals/lp_geodesic.h \
     Functionals/lp_geometry_move.h \
     Functionals/lp_import_openmesh.h \
+    Functionals/lp_import_pointcloud.h \
     Functionals/lp_new.h \
     Functionals/lp_pick_feature_points.h \
     Functionals/lp_pick_feature_points_off.h \
