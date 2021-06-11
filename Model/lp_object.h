@@ -20,8 +20,8 @@ typedef std::weak_ptr<LP_ObjectImpl> LP_Objectw;
 
 #define REGISTER_OBJECT(n) \
     private: \
-    inline static QByteArray mTypeName = #n; \
     public: \
+    inline static QByteArray mTypeName = #n; \
     QByteArray TypeName() const override {return mTypeName;}\
 
 class LP_RendererCamImpl;
@@ -87,7 +87,7 @@ protected:
 
     LP_Objectw mParent;
     QSet<LP_Objectw> mChildren;
-    QReadWriteLock mLock;
+    mutable QReadWriteLock mLock;
 private:
     QUuid mUid;
 

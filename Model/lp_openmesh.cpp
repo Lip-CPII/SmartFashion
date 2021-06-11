@@ -57,7 +57,6 @@ void LP_OpenMeshImpl::Draw(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebuff
 {
     Q_UNUSED(surf)
 
-
     auto model = ModelTrans();
     auto proj = cam->ProjectionMatrix();
     auto view = cam->ViewMatrix() * model;
@@ -265,8 +264,6 @@ bool LP_OpenMeshImpl::DrawSetup(QOpenGLContext *ctx, QSurface *surf, QVariant &o
     mVBO = new QOpenGLBuffer(QOpenGLBuffer::VertexBuffer);
     mVBO->setUsagePattern(QOpenGLBuffer::StreamDraw);
     mVBO->create();
-
-
 
     auto nVs = mMesh->n_vertices();
     const int _a = int( nVs * (sizeof(OpMesh::Point)+

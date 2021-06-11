@@ -67,6 +67,7 @@ void LP_Cmd_Import_PointCloud::redo()
     else
       std::cout << "File provides vertex normals\n";
 
+
     // bounding box
     typename OpMesh::ConstVertexIter vIt(mesh_->vertices_begin());
     typename OpMesh::ConstVertexIter vEnd(mesh_->vertices_end());
@@ -99,7 +100,6 @@ void LP_Cmd_Import_PointCloud::redo()
     objPtr->SetNormals(std::move(norms));
     objPtr->SetBoundingBox(  QVector3D(bbMin[0], bbMin[1], bbMin[2]),
                              QVector3D(bbMax[0], bbMax[1], bbMax[2]));
-
 
 //    mEnt_Mesh->setToolTip(mEnt_Mesh->toolTip()+"\n"+tooltip);
 

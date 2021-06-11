@@ -23,7 +23,10 @@ public:
     virtual ~LP_PointCloudImpl();
 
     void SetPoints(std::vector<QVector3D> &&pc);
+    const std::vector<QVector3D> & Points() const;
+
     void SetNormals(std::vector<QVector3D> &&pc);
+    const std::vector<QVector3D> &Normals() const;
 
     void _Dump(QDebug &debug) override;
 
@@ -43,6 +46,7 @@ public:
     bool DrawSetup(QOpenGLContext *ctx, QSurface *surf, QVariant &option) override;
     void Draw(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebufferObject *fbo, const LP_RendererCam &cam, QVariant &option)  override;
     bool DrawCleanUp(QOpenGLContext *ctx, QSurface *surf) override;
+    void DrawSelect(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebufferObject *fbo, QOpenGLShaderProgram *prog, const LP_RendererCam &cam) override;
 };
 
 #endif // LP_POINTCLOUD_H

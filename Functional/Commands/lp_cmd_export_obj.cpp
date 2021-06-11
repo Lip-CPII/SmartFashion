@@ -19,11 +19,15 @@ void LP_Cmd_Export_Obj::redo()
     if ( mStatus == 0 ){
         return;
     }
-    OpenMesh::IO::Options opt_;
-    opt_ += OpenMesh::IO::Options::VertexTexCoord;
-    opt_ += OpenMesh::IO::Options::VertexNormal;
-
     MyMesh mesh_ = mEnt_Mesh->Mesh();
+    OpenMesh::IO::Options opt_;
+    if ( mesh_->has_vertex_texcoords2D()){
+        opt_ += OpenMesh::IO::Options::VertexTexCoord;
+    }
+    if ( mesh_->has_vertex_normals()){
+        opt_ += OpenMesh::IO::Options::VertexNormal;
+    }
+
     bool rc = OpenMesh::IO::write_mesh(*mesh_.get(), mFile.toStdString(), opt_ );
 
     if ( !rc ){

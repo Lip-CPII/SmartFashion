@@ -19,10 +19,22 @@ void LP_PointCloudImpl::SetPoints(std::vector<QVector3D> &&pc)
     mPoints = pc;
 }
 
+const std::vector<QVector3D> &LP_PointCloudImpl::Points() const
+{
+    QReadLocker locker(&mLock);
+    return mPoints;
+}
+
 void LP_PointCloudImpl::SetNormals(std::vector<QVector3D> &&pc)
 {
     QWriteLocker loocker(&mLock);
     mNormals = pc;
+}
+
+const std::vector<QVector3D> &LP_PointCloudImpl::Normals() const
+{
+    QReadLocker locker(&mLock);
+    return mPoints;
 }
 
 LP_PointCloudImpl::LP_PointCloudImpl(LP_Object parent) : LP_GeometryImpl(parent)
@@ -259,6 +271,27 @@ bool LP_PointCloudImpl::DrawCleanUp(QOpenGLContext *ctx, QSurface *surf)
     mGLInitialized = false; //Unitialized
 
     return true;
+}
+
+void LP_PointCloudImpl::DrawSelect(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebufferObject *fbo, QOpenGLShaderProgram *prog, const LP_RendererCam &cam)
+{
+    Q_UNUSED(surf)
+    Q_UNUSED(fbo)
+    Q_UNUSED(cam)
+
+    auto f = ctx->extraFunctions();
+
+    mVBO->bind();
+    mIndices->bind();
+    prog->setUniformValue("m4_mvp", cam->ProjectionMatrix() * cam->ViewMatrix() * mTrans);
+    prog->enableAttributeArray("a_pos");
+    prog->setAttributeBuffer("a_pos",GL_FLOAT, 0, 3, 12);
+
+    f->glDrawElements(GL_POINTS, GLsizei(mPoints.size()), GL_UNSIGNED_INT, nullptr);
+
+    prog->disableAttributeArray("a_pos");
+    mVBO->release();
+    mIndices->release();
 }
 
 void LP_PointCloudImpl::_Dump(QDebug &debug)
