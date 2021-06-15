@@ -40,6 +40,7 @@ SOURCES += \
     Functionals/lp_poseestimation.cpp \
     Functionals/lp_surfnet.cpp \
     Functionals/lp_yolo_helper.cpp \
+	Functionals/sg_3d_kintting.cpp \
     extern/Geometry.cpp \
     extern/LBO.cpp \
     extern/Mesh.cpp \
@@ -71,7 +72,8 @@ HEADERS += \
     Functionals/lp_pick_feature_points_off.h \
     Functionals/lp_poseestimation.h \
     Functionals/lp_surfnet.h \
-    Functionals/lp_yolo_helper.h \
+    Functionals/lp_yolo_helper.h \	
+    Functionals/sg_3d_kintting.h \
     LP_Registry.h \
     extern/Geometry.h \
     extern/LBO.h \
