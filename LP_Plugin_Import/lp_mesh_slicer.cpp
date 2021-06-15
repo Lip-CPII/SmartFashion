@@ -375,9 +375,9 @@ void LP_Mesh_Slicer::sliderValueChanged(int v)
 
             for ( size_t i=0; i<nPaths; ++i ){
                 const auto nPts = result.at(i).points.size();
-                paths.at(i).resize( nPts );
+                paths.at(i).resize( nPts+1 );
                 memcpy( paths.at(i).data(), result.at(i).points.data(), nPts * sizeof(QVector3D));
-                //paths.at(i).emplace_back(paths.at(i).front());
+                paths.at(i)[nPts] = paths.at(i).front();
             }
             mLock.lockForWrite();
             mPaths[vv] = std::move(paths);

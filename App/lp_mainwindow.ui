@@ -266,7 +266,7 @@ QToolTip {
 </string>
        </property>
        <property name="currentIndex">
-        <number>0</number>
+        <number>1</number>
        </property>
        <widget class="QWidget" name="tab">
         <attribute name="title">
@@ -399,6 +399,15 @@ QUndoView::item:hover {
          </property>
          <item>
           <widget class="QScrollArea" name="scrollArea">
+           <property name="styleSheet">
+            <string notr="true">QLabel{
+   border: 1px;
+   border-style: solid;
+   border-radius: 5px;
+	background-color: rgba(255, 255, 255, 0);
+	border-color: rgb(196, 160, 0);
+}</string>
+           </property>
            <property name="widgetResizable">
             <bool>true</bool>
            </property>

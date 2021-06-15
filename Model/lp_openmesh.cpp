@@ -127,10 +127,13 @@ void LP_OpenMeshImpl::Draw(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebuff
     if ( option.toString() != "Normal"){
         mProgramBoundary->setUniformValue("u_color", QVector3D(0.2,0.2,0.2));
         f->glLineWidth(0.5f);
+        constexpr auto sqrtEps = std::numeric_limits<float>::epsilon();
+        f->glDepthRangef(-sqrtEps, 1.0f - sqrtEps);
         f->glDrawElements(  GL_LINES,
                             GLsizei(mStrides[2]-mStrides[1]),
                             GL_UNSIGNED_INT,
                             (void*)(mStrides[1]*sizeof(uint)));
+        f->glDepthRangef(0.0f, 1.0f);
     }
 
     mProgramBoundary->disableAttributeArray("a_pos");

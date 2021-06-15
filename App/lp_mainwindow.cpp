@@ -376,8 +376,9 @@ void LP_MainWindow::loadPlugins(const QString &path, QMenuBar *menubar)
                         QLibrary library(lib);
                         library.setLoadHints(QLibrary::ExportExternalSymbolsHint);
                         if ( !library.isLoaded() && !library.load()){
+
                             externList.close();
-                            throw std::runtime_error("Failed to load library : " + lib.toStdString());
+                            throw std::runtime_error("Failed to load library : " + library.errorString().toUtf8());
                         }else{
                             qDebug() << "Library loaded : " << lib;
                         }
