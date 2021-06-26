@@ -32,6 +32,17 @@ public:
     Q_INVOKABLE
     std::vector<LP_Objectw> SelectInWorld(const QString &renderername, const QPoint &pos, int w=7, int h=7);
 
+    /**
+     * @brief ProxySelectInWorld return the selected object in world but not update the object selection state
+     * @param renderername
+     * @param pos
+     * @param w
+     * @param h
+     * @return
+     */
+    Q_INVOKABLE
+    std::vector<LP_Objectw> ProxySelectInWorld(const QString &renderername, const QPoint &pos, int w=7, int h=7);
+
     void SelectCustom(const QString &renderername, void *cb, void *data=nullptr);
     std::vector<uint> SelectPoints3D(const QString &renderername, const std::vector<float[3]> &pts, const QPoint &pos, bool mask=false, int w=7, int h=7);
         std::vector<uint> SelectPoints3D(const QString &renderername, const float *pts, const size_t &npts, const QPoint &pos, bool mask=false, int w=7, int h=7);
