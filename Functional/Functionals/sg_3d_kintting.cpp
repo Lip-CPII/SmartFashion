@@ -30,7 +30,7 @@
 #include <QPainterPath>
 #include <QtConcurrent/QtConcurrent>
 
-REGISTER_FUNCTIONAL_IMPLEMENT(SG_3D_Kintting, 3D Knitting, menuSinga)
+REGISTER_FUNCTIONAL_IMPLEMENT(SG_3D_Kintting, 3D Knitting, menuTools/menuSinga)
 
 SG_3D_Kintting::SG_3D_Kintting(QObject *parent) : LP_Functional(parent)
 {

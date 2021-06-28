@@ -34,7 +34,19 @@ void LP_PointCloudImpl::SetNormals(std::vector<QVector3D> &&pc)
 const std::vector<QVector3D> &LP_PointCloudImpl::Normals() const
 {
     QReadLocker locker(&mLock);
-    return mPoints;
+    return mNormals;
+}
+
+void LP_PointCloudImpl::SetColors(std::vector<QVector3D> &&pc)
+{
+    QWriteLocker loocker(&mLock);
+    mColors = pc;
+}
+
+const std::vector<QVector3D> &LP_PointCloudImpl::Colors() const
+{
+    QReadLocker locker(&mLock);
+    return mColors;
 }
 
 LP_PointCloudImpl::LP_PointCloudImpl(LP_Object parent) : LP_GeometryImpl(parent)
@@ -70,12 +82,15 @@ bool LP_PointCloudImpl::DrawSetup(QOpenGLContext *ctx, QSurface *surf, QVariant 
         vsh =
                 "attribute vec3 a_pos;\n"
                 "attribute vec3 a_norm;\n"
+                "attribute vec3 a_color;\n"
                 "uniform mat4 m4_view;\n"
                 "uniform mat4 m4_mvp;\n"
                 "uniform mat3 m3_normal;\n"
                 "varying vec3 normal;\n"
                 "varying vec3 pos;\n"
+                "varying vec3 color;\n"
                 "void main(){\n"
+                "   color = a_color;\n"
                 "   pos = vec3( m4_view * vec4(a_pos, 1.0));\n"
                 "   normal = m3_normal * a_norm;\n"
                 "   gl_Position = m4_mvp*vec4(a_pos, 1.0);\n"
@@ -83,6 +98,7 @@ bool LP_PointCloudImpl::DrawSetup(QOpenGLContext *ctx, QSurface *surf, QVariant 
         fsh =
                 "varying vec3 normal;\n"
                 "varying vec3 pos;\n"
+                "varying vec3 color;\n"
                 "uniform vec3 v3_color;\n"
                 "void main(){\n"
                 "   vec3 lightPos = vec3(0.0, 1000.0, 0.0);\n"
@@ -90,14 +106,14 @@ bool LP_PointCloudImpl::DrawSetup(QOpenGLContext *ctx, QSurface *surf, QVariant 
                 "   vec3 lightDir = normalize(lightPos - pos);\n"
                 "   vec3 H = normalize(viewDir + lightDir);\n"
                 "   vec3 N = normalize(normal);\n"
-                "   vec3 ambi = v3_color;\n"
+                "   vec3 ambi = v3_color + color;\n"
                 "   float Kd = max(dot(H, N), 0.0);\n"
                 "   vec3 diff = Kd * vec3(0.2, 0.2, 0.2);\n"
-                "   vec3 color = ambi + diff;\n"
+                "   vec3 outColor = ambi + diff;\n"
                 "   float Ks = pow( Kd, 80.0 );\n"
                 "   vec3 spec = Ks * vec3(0.5, 0.5, 0.5);\n"
-                "   color += spec;\n"
-                "   gl_FragColor = vec4(color,1.0);\n"
+                "   outColor += spec;\n"
+                "   gl_FragColor = vec4(outColor,1.0);\n"
                 "}";
     }
 
@@ -122,8 +138,10 @@ bool LP_PointCloudImpl::DrawSetup(QOpenGLContext *ctx, QSurface *surf, QVariant 
 
     auto nVs = mPoints.size();
     auto nNs = mNormals.size();
+    auto nCs = mColors.size();
     const int _a = int( nVs * sizeof(QVector3D)+
-                        nNs * sizeof(QVector3D));
+                        nNs * sizeof(QVector3D)+
+                        nCs * sizeof(QVector3D));
 
     mVBO->bind();
     mVBO->allocate( _a );
@@ -133,6 +151,7 @@ bool LP_PointCloudImpl::DrawSetup(QOpenGLContext *ctx, QSurface *surf, QVariant 
                                                           QOpenGLBuffer::RangeInvalidateBuffer));
     auto pptr = mPoints.data();
     auto nptr = mNormals.empty() ? nullptr : mNormals.data();
+    auto cptr = mColors.empty() ? nullptr : mColors.data();
 
     for ( size_t i=0; i<nVs; ++i, ++pptr){
         memcpy(ptr, pptr, sizeof(QVector3D));
@@ -143,6 +162,13 @@ bool LP_PointCloudImpl::DrawSetup(QOpenGLContext *ctx, QSurface *surf, QVariant 
             ptr += sizeof(QVector3D)/sizeof(*ptr);
             ++nptr;
         }
+
+        if ( cptr ){
+            memcpy(ptr, cptr, sizeof(QVector3D));
+            ptr += sizeof(QVector3D)/sizeof(*ptr);
+            ++cptr;
+        }
+
 
         if ( mBBmin.x() > (*pptr)[0]){
             mBBmin.setX((*pptr)[0]);
@@ -219,18 +245,34 @@ void LP_PointCloudImpl::Draw(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebu
     prog->setUniformValue("m4_mvp", proj*view );
     prog->setUniformValue("m4_view", view );
     prog->setUniformValue("m3_normal", view.normalMatrix());
-    prog->setUniformValue("v3_color", QVector3D(0.8,0.8,0.8));
+    prog->setUniformValue("v3_color", QVector3D(0.3,0.3,0.3));
 
     prog->enableAttributeArray("a_pos");
 
     mVBO->bind();
     mIndices->bind();
     if (mNormals.empty()){
-        prog->setAttributeBuffer("a_pos",GL_FLOAT, 0, 3, 12);
+        if ( mColors.empty()){
+            prog->setAttributeBuffer("a_pos",GL_FLOAT, 0, 3, 12);
+        } else {
+            prog->enableAttributeArray("a_color");
+
+            prog->setAttributeBuffer("a_pos",GL_FLOAT, 0, 3, 24);
+            prog->setAttributeBuffer("a_color",GL_FLOAT, 12, 3, 24);
+        }
     }else{
-        prog->enableAttributeArray("a_norm");
-        prog->setAttributeBuffer("a_pos",GL_FLOAT, 0, 3, 24);
-        prog->setAttributeBuffer("a_norm",GL_FLOAT, 12, 3, 24);
+        if ( mColors.empty()){
+            prog->enableAttributeArray("a_norm");
+            prog->setAttributeBuffer("a_pos",GL_FLOAT, 0, 3, 24);
+            prog->setAttributeBuffer("a_norm",GL_FLOAT, 12, 3, 24);
+        } else {
+            prog->enableAttributeArray("a_norm");
+            prog->enableAttributeArray("a_color");
+
+            prog->setAttributeBuffer("a_pos",GL_FLOAT, 0, 3, 36);
+            prog->setAttributeBuffer("a_norm",GL_FLOAT, 12, 3, 36);
+            prog->setAttributeBuffer("a_color",GL_FLOAT, 24, 3, 36);
+        }
     }
 
     f->glDrawElements(GL_POINTS, GLsizei(mPoints.size()), GL_UNSIGNED_INT, nullptr);
@@ -240,6 +282,7 @@ void LP_PointCloudImpl::Draw(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebu
 
     prog->disableAttributeArray("a_pos");
     prog->disableAttributeArray("a_norm");
+    prog->disableAttributeArray("a_color");
     prog->release();
 
     fbo->release();
@@ -285,7 +328,13 @@ void LP_PointCloudImpl::DrawSelect(QOpenGLContext *ctx, QSurface *surf, QOpenGLF
     mIndices->bind();
     prog->setUniformValue("m4_mvp", cam->ProjectionMatrix() * cam->ViewMatrix() * mTrans);
     prog->enableAttributeArray("a_pos");
-    prog->setAttributeBuffer("a_pos",GL_FLOAT, 0, 3, 12);
+    if ( mNormals.empty() && mColors.empty()){
+        prog->setAttributeBuffer("a_pos",GL_FLOAT, 0, 3, 12);
+    } else if ( mNormals.empty() || mColors.empty()) {
+        prog->setAttributeBuffer("a_pos",GL_FLOAT, 0, 3, 24);
+    } else {
+        prog->setAttributeBuffer("a_pos",GL_FLOAT, 0, 3, 36);
+    }
 
     f->glDrawElements(GL_POINTS, GLsizei(mPoints.size()), GL_UNSIGNED_INT, nullptr);
 
@@ -298,7 +347,8 @@ void LP_PointCloudImpl::_Dump(QDebug &debug)
 {
     LP_GeometryImpl::_Dump(debug);
     debug.nospace() << "#V : " << mPoints.size() << ", "
-                    << "#N : " << mNormals.size()
+                    << "#N : " << mNormals.size() << ", "
+                    << "#C : " << mColors.size()
                     << "\n";
 }
 

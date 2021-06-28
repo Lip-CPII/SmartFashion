@@ -296,7 +296,7 @@ std::vector<LP_Objectw> LP_GLSelector::SelectInWorld(const QString &renderername
         delete fbo;
         delete prog;
 
-        for ( auto it = depthMap.begin(); it != depthMap.cend(); ++it ){
+        for ( auto it = depthMap.begin(); it != depthMap.end(); ++it ){
             selections.emplace_back(it.value());
         }
     };
@@ -504,7 +504,7 @@ void LP_GLSelector::SelectCustom(const QString &renderername, void *cb, void *da
 std::vector<uint> LP_GLSelector::SelectPoints3D(const QString &renderername, const std::vector<float[3]> &pts, const QPoint &pos, bool mask, int w, int h)
 {
     auto v_ = g_Renderers.find(renderername);
-    if ( g_Renderers.cend() == v_ ){
+    if ( g_Renderers.end() == v_ ){
         return std::vector<uint>();
     }
 
@@ -712,7 +712,7 @@ std::vector<uint> LP_GLSelector::SelectPoints3D(const QString &renderername, con
         prog->addShaderFromSourceCode(QOpenGLShader::Fragment,fsh);
         prog->bind();
         prog->setUniformValue("m4_mvp", cam->ProjectionMatrix() * cam->ViewMatrix());
-        prog->setUniformValue("f_pointSize", std::max<float>(xspan, yspan));
+        prog->setUniformValue("f_pointSize", 1.f/*std::max<float>(xspan, yspan)*/);
         prog->enableAttributeArray("a_color");
         prog->setAttributeArray("a_color", _color.data());
 
@@ -811,6 +811,11 @@ std::vector<uint> LP_GLSelector::SelectPoints3D(const QString &renderername, con
     return selections;
 }
 
+void LP_GLSelector::SetRubberBand(const QRubberBand *rb)
+{
+    mRubberBand = rb;
+}
+
 //LP_GLRenderer *LP_GLSelector::GetRenderer(const QString &name) const
 //{
 //    return mRenderers.find(name).value();
@@ -820,3 +825,9 @@ std::vector<uint> LP_GLSelector::SelectPoints3D(const QString &renderername, con
 //{
 //    mRenderers[renderer->objectName()] = renderer;
 //}
+
+
+const QRubberBand *LP_GLSelector::RubberBand() const
+{
+    return mRubberBand;
+}

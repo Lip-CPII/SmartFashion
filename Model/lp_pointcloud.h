@@ -28,6 +28,9 @@ public:
     void SetNormals(std::vector<QVector3D> &&pc);
     const std::vector<QVector3D> &Normals() const;
 
+    void SetColors(std::vector<QVector3D> &&pc);
+    const std::vector<QVector3D> &Colors() const;
+
     void _Dump(QDebug &debug) override;
 
 protected:
@@ -40,6 +43,7 @@ private:
 
     std::vector<QVector3D> mPoints;
     std::vector<QVector3D> mNormals;
+    std::vector<QVector3D> mColors;
 
     // LP_ObjectImpl interface
 public:

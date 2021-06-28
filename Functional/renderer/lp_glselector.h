@@ -6,6 +6,8 @@
 #include <QObject>
 #include <QSet>
 
+#include <QRubberBand>
+
 #include <QUuid>
 #include <QReadWriteLock>
 
@@ -52,6 +54,9 @@ public:
 //    LP_GLRenderer *GetRenderer(const QString &name) const;
 //    void AddRenderer(LP_GLRenderer *renderer);
 
+    void SetRubberBand(const QRubberBand *rb);
+    const QRubberBand *RubberBand() const;
+
     explicit LP_GLSelector();
 
     static std::vector<QVector3D> g_24ColorVector;
@@ -88,6 +93,9 @@ private:
     QSet<LP_Objectw> mSelectedObjs;
     QOpenGLShaderProgram *mProgram = nullptr;
     QReadWriteLock mLock;
+
+    const QRubberBand *mRubberBand;
+
 };
 
 extern FUNCTIONAL_EXPORT std::unique_ptr<LP_GLSelector> g_GLSelector;
