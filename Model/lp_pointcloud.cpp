@@ -15,7 +15,7 @@ LP_PointCloudImpl::~LP_PointCloudImpl()
 
 void LP_PointCloudImpl::SetPoints(std::vector<QVector3D> &&pc)
 {
-    QWriteLocker loocker(&mLock);
+    QWriteLocker locker(&mLock);
     mPoints = pc;
 }
 
@@ -27,7 +27,7 @@ const std::vector<QVector3D> &LP_PointCloudImpl::Points() const
 
 void LP_PointCloudImpl::SetNormals(std::vector<QVector3D> &&pc)
 {
-    QWriteLocker loocker(&mLock);
+    QWriteLocker locker(&mLock);
     mNormals = pc;
 }
 
@@ -39,7 +39,7 @@ const std::vector<QVector3D> &LP_PointCloudImpl::Normals() const
 
 void LP_PointCloudImpl::SetColors(std::vector<QVector3D> &&pc)
 {
-    QWriteLocker loocker(&mLock);
+    QWriteLocker locker(&mLock);
     mColors = pc;
 }
 
@@ -113,7 +113,7 @@ bool LP_PointCloudImpl::DrawSetup(QOpenGLContext *ctx, QSurface *surf, QVariant 
                 "   float Ks = pow( Kd, 80.0 );\n"
                 "   vec3 spec = Ks * vec3(0.5, 0.5, 0.5);\n"
                 "   outColor += spec;\n"
-                "   gl_FragColor = vec4(outColor,1.0);\n"
+                "   gl_FragColor = vec4(color,1.0);\n"
                 "}";
     }
 
@@ -126,7 +126,6 @@ bool LP_PointCloudImpl::DrawSetup(QOpenGLContext *ctx, QSurface *surf, QVariant 
         }
         mPrograms[option.toString()] = prog;
     }
-
 
     if ( mGLInitialized ){
         return true;
@@ -226,7 +225,6 @@ bool LP_PointCloudImpl::DrawSetup(QOpenGLContext *ctx, QSurface *surf, QVariant 
 void LP_PointCloudImpl::Draw(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebufferObject *fbo, const LP_RendererCam &cam, QVariant &option)
 {
     Q_UNUSED(surf)
-
 
     auto model = ModelTrans();
     auto proj = cam->ProjectionMatrix();
