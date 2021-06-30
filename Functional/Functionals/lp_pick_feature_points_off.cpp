@@ -279,6 +279,7 @@ bool LP_Pick_Feature_Points_OFF::eventFilter(QObject *watched, QEvent *event)
         return LP_OpenMeshw() = std::static_pointer_cast<LP_OpenMeshImpl>(obj.lock());
     };
 
+    event->ignore();
     if ( QEvent::MouseButtonRelease == event->type()){
         auto e = static_cast<QMouseEvent*>(event);
 
@@ -328,7 +329,7 @@ bool LP_Pick_Feature_Points_OFF::eventFilter(QObject *watched, QEvent *event)
     //                    mFeaturePoints.setStringList(pList);
                         emit glUpdateRequest();
                     }
-                    return true;
+                    event->accept();
                 }
             } else {
                 auto &&tmp = g_GLSelector->SelectInWorld("Shade",
@@ -341,7 +342,7 @@ bool LP_Pick_Feature_Points_OFF::eventFilter(QObject *watched, QEvent *event)
                         mNs = pc->Normals();
                         LP_Document::gDoc.RemoveObject(std::move(o));
                         emit glUpdateRequest();
-                        return true;    //Since event filter has been called
+                        event->accept();;    //Since event filter has been called
                     }
                 }
             }
@@ -352,7 +353,7 @@ bool LP_Pick_Feature_Points_OFF::eventFilter(QObject *watched, QEvent *event)
             mFids.clear();
             mPoints.clear();
             emit glUpdateRequest();
-            return true;
+            event->accept();
 //            QStringList list;
 //            mFeaturePoints.setStringList(list);
         }
