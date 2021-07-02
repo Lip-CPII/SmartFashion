@@ -35,7 +35,7 @@ void LP_Cmd_Import_PointCloud::redo()
 #endif
 
     OpenMesh::IO::Options opt_;
-    //opt_ += OpenMesh::IO::Options::VertexColor;
+    opt_ += OpenMesh::IO::Options::VertexColor;
     opt_ += OpenMesh::IO::Options::VertexNormal;
 
     MyMesh mesh_ = std::make_shared<OpMesh>();
@@ -67,6 +67,12 @@ void LP_Cmd_Import_PointCloud::redo()
     else
       std::cout << "File provides vertex normals\n";
 
+    if ( ! opt_.check( OpenMesh::IO::Options::VertexColor ) )
+      qDebug() << "No vertex color";
+    else
+      std::cout << "File provides vertex colors\n";
+
+    const bool hasColor = opt_.check( OpenMesh::IO::Options::VertexColor );
 
     // bounding box
     typename OpMesh::ConstVertexIter vIt(mesh_->vertices_begin());
@@ -77,7 +83,12 @@ void LP_Cmd_Import_PointCloud::redo()
     Vec3f bbMin, bbMax;
 
     bbMin = bbMax = OpenMesh::vector_cast<Vec3f>(mesh_->point(*vIt));
-    std::vector<QVector3D> pts(nv), norms(nv);
+    std::vector<QVector3D> pts(nv), norms(nv), colors;
+    if ( hasColor ) {
+        colors.resize(nv);
+    }
+
+    const float inv = 1.0f / 255.0f;
     for (size_t count=0; vIt!=vEnd; ++vIt, ++count)
     {
         auto &&v = OpenMesh::vector_cast<Vec3f>(mesh_->point(*vIt));
@@ -86,6 +97,11 @@ void LP_Cmd_Import_PointCloud::redo()
         bbMax.maximize( v);
         pts[count].setX(v[0]);pts[count].setY(v[1]);pts[count].setZ(v[2]);
         norms[count].setX(n[0]);norms[count].setY(n[1]);norms[count].setZ(n[2]);
+
+        if (hasColor)   {
+            auto &&c = OpenMesh::vector_cast<Vec3f>(mesh_->color(*vIt));
+            colors[count].setX(c[0]*inv);colors[count].setY(c[1]*inv);colors[count].setZ(c[2]*inv);
+        }
     }
 
     tooltip += QString("BBox max(%1, %2, %3), ").arg(bbMax[0]).arg(bbMax[1]).arg(bbMax[2]);
@@ -98,6 +114,9 @@ void LP_Cmd_Import_PointCloud::redo()
 
     objPtr->SetPoints(std::move(pts));
     objPtr->SetNormals(std::move(norms));
+    if ( hasColor ){
+        objPtr->SetColors(std::move(colors));
+    }
     objPtr->SetBoundingBox(  QVector3D(bbMin[0], bbMin[1], bbMin[2]),
                              QVector3D(bbMax[0], bbMax[1], bbMax[2]));
 

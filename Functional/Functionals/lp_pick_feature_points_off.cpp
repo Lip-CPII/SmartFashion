@@ -269,7 +269,6 @@ bool LP_Pick_Feature_Points_OFF::Run()
     return false;
 }
 
-
 bool LP_Pick_Feature_Points_OFF::eventFilter(QObject *watched, QEvent *event)
 {
     static auto _isMesh = [](LP_Objectw obj){
@@ -279,6 +278,7 @@ bool LP_Pick_Feature_Points_OFF::eventFilter(QObject *watched, QEvent *event)
         return LP_OpenMeshw() = std::static_pointer_cast<LP_OpenMeshImpl>(obj.lock());
     };
 
+    event->ignore();
     if ( QEvent::MouseButtonRelease == event->type()){
         auto e = static_cast<QMouseEvent*>(event);
 
@@ -328,7 +328,7 @@ bool LP_Pick_Feature_Points_OFF::eventFilter(QObject *watched, QEvent *event)
     //                    mFeaturePoints.setStringList(pList);
                         emit glUpdateRequest();
                     }
-                    return true;
+                    event->accept();
                 }
             } else {
                 auto &&tmp = g_GLSelector->SelectInWorld("Shade",
@@ -341,7 +341,7 @@ bool LP_Pick_Feature_Points_OFF::eventFilter(QObject *watched, QEvent *event)
                         mNs = pc->Normals();
                         LP_Document::gDoc.RemoveObject(std::move(o));
                         emit glUpdateRequest();
-                        return true;    //Since event filter has been called
+                        event->accept();;    //Since event filter has been called
                     }
                 }
             }
@@ -352,7 +352,7 @@ bool LP_Pick_Feature_Points_OFF::eventFilter(QObject *watched, QEvent *event)
             mFids.clear();
             mPoints.clear();
             emit glUpdateRequest();
-            return true;
+            event->accept();
 //            QStringList list;
 //            mFeaturePoints.setStringList(list);
         }
@@ -366,9 +366,6 @@ bool LP_Pick_Feature_Points_OFF::eventFilter(QObject *watched, QEvent *event)
             for ( int i=0; i<nVs; ++i ){
                 auto it = mPoints.find(i);
                 if ( it == mPoints.end()) {
-                    if ( qFabs(mVs[i].z()) > 1.3f ) {
-                        continue;
-                    }
                     newVs.emplace_back(mVs[i]);
                     newNs.emplace_back(mNs[i]);
                 }
@@ -397,7 +394,6 @@ bool LP_Pick_Feature_Points_OFF::eventFilter(QObject *watched, QEvent *event)
 
     return QObject::eventFilter(watched, event);
 }
-
 
 void LP_Pick_Feature_Points_OFF::FunctionalRender_L(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebufferObject *fbo, const LP_RendererCam &cam, const QVariant &options)
 {

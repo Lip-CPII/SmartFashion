@@ -365,7 +365,11 @@ void LP_MainWindow::loadPlugins(const QString &path, QMenuBar *menubar)
     const auto folders = pluginsDir.entryList(QDir::Dirs | QDir::NoSymLinks | QDir::NoDotAndDotDot );
     for ( auto &folder : folders ){
         QDir folderDir(path + "/" + folder);
+#ifdef Q_OS_LINUX
         folderDir.setNameFilters({"*.so*"});
+#elif defined Q_OS_WIN
+        folderDir.setNameFilters({"*.dll"});
+#endif
         const auto entryList = folderDir.entryList(QDir::Files | QDir::NoSymLinks);
         for (const QString &fileName : entryList) {
             QFile externList(folderDir.path()+"/extern_list");
@@ -382,7 +386,9 @@ void LP_MainWindow::loadPlugins(const QString &path, QMenuBar *menubar)
                                 .arg(folderDir.path())
                                 .arg(lib); //3rd-party should be put in "externs/"
 #elif defined Q_OS_WIN
-                        lib = QString("%1.dll").arg(lib);
+                        lib = QString("%1/externs/%2.so")
+                                .arg(folderDir.path())
+                                .arg(lib); //3rd-party should be put in "externs/"
 #endif
                         QLibrary library(lib);
                         library.setLoadHints(QLibrary::ExportExternalSymbolsHint);
