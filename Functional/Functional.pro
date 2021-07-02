@@ -40,7 +40,7 @@ SOURCES += \
     Functionals/lp_poseestimation.cpp \
     Functionals/lp_surfnet.cpp \
     Functionals/lp_yolo_helper.cpp \
-	Functionals/sg_3d_kintting.cpp \
+    Functionals/sg_3d_kintting.cpp \
     extern/Geometry.cpp \
     extern/LBO.cpp \
     extern/Mesh.cpp \

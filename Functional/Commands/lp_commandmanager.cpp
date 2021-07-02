@@ -78,6 +78,11 @@ void LP_CommandStack::Load(QDataStream &in)
     }
 }
 
+void LP_CommandStack::Obsolete(LP_Command *cmd)
+{
+
+}
+
 
 bool LP_CommandGroup::eventFilter(QObject *watched, QEvent *event)
 {

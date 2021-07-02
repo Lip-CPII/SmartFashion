@@ -369,6 +369,9 @@ void LP_Mesh_Slicer::sliderValueChanged(int v)
             if ( 0 == nPaths ){
                 return;
             }
+            auto copy = Intersector::Mesh::o_Edge;
+            qDebug() << copy.front().front().first;
+
 
             std::vector<std::vector<QVector3D>> paths;
             paths.resize( nPaths );

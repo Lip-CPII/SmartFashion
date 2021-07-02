@@ -1,8 +1,9 @@
 #include "lp_pick_feature_points_off.h"
 
-
 #include "lp_renderercam.h"
 #include "lp_openmesh.h"
+#include "lp_document.h"
+#include "lp_pointcloud.h"
 #include "renderer/lp_glselector.h"
 #include "renderer/lp_glrenderer.h"
 
@@ -272,36 +273,41 @@ bool LP_Pick_Feature_Points_OFF::Run()
 bool LP_Pick_Feature_Points_OFF::eventFilter(QObject *watched, QEvent *event)
 {
     static auto _isMesh = [](LP_Objectw obj){
-        if ( obj.expired()){
+        if ( obj.expired() || LP_OpenMeshImpl::mTypeName != obj.lock()->TypeName()){
             return LP_OpenMeshw();
         }
         return LP_OpenMeshw() = std::static_pointer_cast<LP_OpenMeshImpl>(obj.lock());
     };
 
+    event->ignore();
     if ( QEvent::MouseButtonRelease == event->type()){
         auto e = static_cast<QMouseEvent*>(event);
 
         if ( e->button() == Qt::LeftButton ){
             //Select the entity vertices
             if ( !mVs.empty()){
+                auto rb = g_GLSelector->RubberBand();
+
+                qDebug() << rb->pos();
                 auto &&tmp = g_GLSelector->SelectPoints3D("Shade",
                                                     &mVs.at(0)[0],
                                                     mVs.size(),
-                                                    e->pos(), true);
+                                                    rb->pos()+rb->rect().center(), false,
+                                                    rb->width(), rb->height());
                 if ( !tmp.empty()){
-                    auto &&pt_id = tmp.front();
-                    qDebug() << "Picked : " << tmp;
-                    if (Qt::ControlModifier & e->modifiers()){
-                        if ( !mPoints.contains(pt_id)){
-                            mPoints.insert(pt_id, mPoints.size());
+                    for (auto pt_id : tmp ){
+                        if (Qt::ControlModifier & e->modifiers()){
+                            if ( !mPoints.contains(pt_id)){
+                                mPoints.insert(pt_id, mPoints.size());
+                            }
+                        }else if (Qt::ShiftModifier & e->modifiers()){
+                            if ( mPoints.contains(pt_id)){
+                                qDebug() << mPoints.take(pt_id);
+                            }
+                        }else{
+                            mPoints.clear();
+                            mPoints.insert(pt_id,0);
                         }
-                    }else if (Qt::ShiftModifier & e->modifiers()){
-                        if ( mPoints.contains(pt_id)){
-                            qDebug() << mPoints.take(pt_id);
-                        }
-                    }else{
-                        mPoints.clear();
-                        mPoints.insert(pt_id,0);
                     }
 
                     QString info("Picked Points:");
@@ -323,18 +329,70 @@ bool LP_Pick_Feature_Points_OFF::eventFilter(QObject *watched, QEvent *event)
     //                    mFeaturePoints.setStringList(pList);
                         emit glUpdateRequest();
                     }
-                    return true;
+                    event->accept();
+                }
+            } else {
+                auto &&tmp = g_GLSelector->SelectInWorld("Shade",
+                                                        e->pos());
+                for ( auto &o : tmp ){
+                    if ( o.lock() && LP_PointCloudImpl::mTypeName == o.lock()->TypeName()) {
+                        mObject = o;
+                        auto pc = std::static_pointer_cast<LP_PointCloudImpl>(o.lock());
+                        mVs = pc->Points();
+                        mNs = pc->Normals();
+                        LP_Document::gDoc.RemoveObject(std::move(o));
+                        emit glUpdateRequest();
+                        event->accept();;    //Since event filter has been called
+                    }
                 }
             }
         }else if ( e->button() == Qt::RightButton ){
             mLabel->setText("Select A Mesh");
             mVs.clear();
+            mNs.clear();
             mFids.clear();
             mPoints.clear();
             emit glUpdateRequest();
-            return true;
+            event->accept();
 //            QStringList list;
 //            mFeaturePoints.setStringList(list);
+        }
+    } else if (QEvent::KeyPress == event->type()){
+        QKeyEvent *e = static_cast<QKeyEvent*>(event);
+        switch(e->key()){
+        case Qt::Key_Delete:{
+            auto pc = std::static_pointer_cast<LP_PointCloudImpl>(mObject.lock());
+            const int nVs = mVs.size();
+            std::vector<QVector3D> newVs, newNs;
+            for ( int i=0; i<nVs; ++i ){
+                auto it = mPoints.find(i);
+                if ( it == mPoints.end()) {
+                    if ( qFabs(mVs[i].z()) > 1.3f ) {
+                        continue;
+                    }
+                    newVs.emplace_back(mVs[i]);
+                    newNs.emplace_back(mNs[i]);
+                }
+            }
+            mVs = newVs;
+            mNs = newNs;
+            mPoints.clear();
+            emit glUpdateRequest();
+            break;
+        }
+        case Qt::Key_Space:
+        case Qt::Key_Enter:{
+            auto pc = std::static_pointer_cast<LP_PointCloudImpl>(mObject.lock());
+            pc->SetPoints(std::move(mVs));
+            pc->SetNormals(std::move(mNs));
+            mVs.clear();
+            mNs.clear();
+            mPoints.clear();
+            LP_Document::gDoc.AddObject(std::move(mObject));
+            emit glUpdateRequest();
+            break;
+            break;
+        }
         }
     }
 
@@ -367,11 +425,12 @@ void LP_Pick_Feature_Points_OFF::FunctionalRender_L(QOpenGLContext *ctx, QSurfac
 
     mProgram->bind();                       //Bind the member shader to the context
     mProgram->setUniformValue("m4_mvp", proj * view );  //Set the Model-View-Projection matrix
-    mProgram->setUniformValue("f_pointSize", 7.0f);     //Set the point-size which is enabled before
+    mProgram->setUniformValue("f_pointSize", 2.0f);     //Set the point-size which is enabled before
     mProgram->setUniformValue("v4_color", QVector4D( 0.7f, 1.0f, 0.2f, 0.6f )); //Set the point color
 
     mProgram->enableAttributeArray("a_pos");        //Enable the "a_pos" attribute buffer of the shader
     mProgram->setAttributeArray("a_pos",mVs.data()); //Set the buffer data of "a_pos"
+    f->glDrawArrays(GL_POINTS, 0, mVs.size());
 
     f->glDrawElements(GL_TRIANGLES, mFids.size(),
                       GL_UNSIGNED_INT,

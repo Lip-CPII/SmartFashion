@@ -60,8 +60,10 @@ private:
     bool mInitialized = false;
     std::shared_ptr<QWidget> mWidget;
     QLabel *mLabel = nullptr;
+    std::weak_ptr<LP_ObjectImpl> mObject;
     QOpenGLShaderProgram *mProgram = nullptr;
     std::vector<QVector3D> mVs;
+    std::vector<QVector3D> mNs;
     std::vector<uint> mFids;
     std::vector<uint> mEdges;
     std::weak_ptr<LP_RendererCamImpl> mCam;

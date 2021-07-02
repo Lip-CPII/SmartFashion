@@ -29,6 +29,8 @@ LP_MainWindow::LP_MainWindow(QWidget *parent)
     //Progress
     loadProgressWidget();
 
+    //loadRubberBand();
+
     //Renderers
     loadRenderers();
 
@@ -264,10 +266,19 @@ void LP_MainWindow::loadFunctionals()
 
 void LP_MainWindow::loadSelector()
 {
+    auto rb = new QRubberBand(QRubberBand::Rectangle, ui->window_Shade);
+    g_GLSelector->SetRubberBand(rb);
+    ui->window_Shade->SetRubberBand(rb);
+
+    rb = new QRubberBand(QRubberBand::Rectangle, ui->window_Normal);
+    //g_GLSelector->SetRubberBand(rb);
+    ui->window_Normal->SetRubberBand(rb);
+
     auto pSelector = ui->treeView->selectionModel();
     if ( !pSelector ){
         return;
     }
+
     connect(pSelector, &QItemSelectionModel::selectionChanged,
             [this](const QItemSelection &selected, const QItemSelection &deselected){
 
