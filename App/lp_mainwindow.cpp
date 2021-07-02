@@ -35,7 +35,7 @@ LP_MainWindow::LP_MainWindow(QWidget *parent)
     //Selector
     loadSelector();
 
-    qDebug()<<"Pluing check begin!";
+    qDebug()<<"Pluging check begin!";
     //Load all plugins
     loadPlugins("plugins", ui->menubar);
     qDebug()<<"Pluing check finished!";
@@ -354,45 +354,60 @@ void LP_MainWindow::loadPlugins(const QString &path, QMenuBar *menubar)
     const auto folders = pluginsDir.entryList(QDir::Dirs | QDir::NoSymLinks | QDir::NoDotAndDotDot );
     for ( auto &folder : folders ){
         QDir folderDir(path + "/" + folder);
+#ifdef Q_OS_LINUX
         folderDir.setNameFilters({"*.so*"});
+#elif defined Q_OS_WIN
+        folderDir.setNameFilters({"*.dll"});
+#endif
+
+        if ( folderDir.exists("externs")){
+            QString dllPath = folderDir.absoluteFilePath("externs");
+            QCoreApplication::addLibraryPath(folderDir.absoluteFilePath("externs"));
+#ifdef Q_OS_WIN
+            SetDllDirectoryA(dllPath.toStdString().c_str());
+#endif
+        }
         const auto entryList = folderDir.entryList(QDir::Files | QDir::NoSymLinks);
         for (const QString &fileName : entryList) {
-            QFile externList(folderDir.path()+"/extern_list");
-            if ( externList.exists()){  //Load the dependencies before loading the plugin
-                try {
-                    if ( !externList.open(QIODevice::ReadOnly)){
-                        throw std::runtime_error("Failed to parse 3rd-party list.");
-                    }
-                    QTextStream in(&externList);
-                    while ( !in.atEnd()){
-                        QString lib = in.readLine();
-#ifdef Q_OS_LINUX
-                        lib = QString("%1/externs/lib%2.so")
-                                .arg(folderDir.path())
-                                .arg(lib); //3rd-party should be put in "externs/"
-#elif defined Q_OS_WIN
-                        lib = QString("%1.dll").arg(lib);
-#endif
-                        QLibrary library(lib);
-                        library.setLoadHints(QLibrary::ExportExternalSymbolsHint);
-                        if ( !library.isLoaded() && !library.load()){
+//            QFile externList(folderDir.path()+"/extern_list");
+//            if ( externList.exists()){  //Load the dependencies before loading the plugin
+//                try {
+//                    if ( !externList.open(QIODevice::ReadOnly)){
+//                        throw std::runtime_error("Failed to parse 3rd-party list.");
+//                    }
 
-                            externList.close();
-                            throw std::runtime_error("Failed to load library : " + library.errorString().toUtf8());
-                        }else{
-                            qDebug() << "Library loaded : " << lib;
-                        }
-                    }
-                    externList.close();
-                }  catch (const std::exception &e ) {
-                    qDebug() << e.what();
-                    qWarning() << "Loading 3rd-party dependencies failed - " << externList.fileName();
-                    continue;
-                } catch (...){
-                    qWarning() << "Loading 3rd-party dependencies failed - " << externList.fileName();
-                    continue;
-                }
-            }
+//                    QTextStream in(&externList);
+//                    while ( !in.atEnd()){
+//                        QString lib = in.readLine();
+//#ifdef Q_OS_LINUX
+//                        lib = QString("%1/externs/lib%2.so")
+//                                .arg(folderDir.path())
+//                                .arg(lib); //3rd-party should be put in "externs/"
+//#elif defined Q_OS_WIN
+//                        lib = QString("%1/externs/%2.dll")
+//                        .arg(folderDir.absolutePath())
+//                        .arg(lib); //3rd-party should be put in "externs/";
+//#endif
+//                        QLibrary library(lib);
+//                        library.setLoadHints(QLibrary::ExportExternalSymbolsHint);
+//                        if ( !library.isLoaded() && !library.load()){
+
+//                            externList.close();
+//                            throw std::runtime_error("Failed to load library : " + library.errorString().toUtf8());
+//                        }else{
+//                            qDebug() << "Dependency loaded : " << lib;
+//                        }
+//                    }
+//                    externList.close();
+//                }  catch (const std::exception &e ) {
+//                    qDebug() << e.what();
+//                    qWarning() << "Loading 3rd-party dependencies failed - " << externList.fileName();
+//                    continue;
+//                } catch (...){
+//                    qWarning() << "Loading 3rd-party dependencies failed - " << externList.fileName();
+//                    continue;
+//                }
+//            }
             QPluginLoader loader(folderDir.absoluteFilePath(fileName));
             QObject *plugin = loader.instance();
             auto action = qobject_cast<LP_ActionPlugin*>(plugin);
