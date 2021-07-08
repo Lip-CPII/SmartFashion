@@ -94,6 +94,7 @@ bool LP_PointCloudImpl::DrawSetup(QOpenGLContext *ctx, QSurface *surf, QVariant 
                 "   pos = vec3( m4_view * vec4(a_pos, 1.0));\n"
                 "   normal = m3_normal * a_norm;\n"
                 "   gl_Position = m4_mvp*vec4(a_pos, 1.0);\n"
+                "   gl_PointSize = 3.0;\n"
                 "}";
         fsh =
                 "varying vec3 normal;\n"
@@ -232,11 +233,12 @@ void LP_PointCloudImpl::Draw(QOpenGLContext *ctx, QSurface *surf, QOpenGLFramebu
     auto f = ctx->extraFunctions();
 
     auto it = mPrograms.find(option.toString());
-    if ( it == mPrograms.cend()){
+    if ( it == mPrograms.end()){
         return;
     }
     auto prog = it.value();
 
+    f->glEnable(GL_PROGRAM_POINT_SIZE);
     fbo->bind();
 
     prog->bind();

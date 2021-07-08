@@ -60,8 +60,12 @@ private:
 
     void initializeGL();
 
+    struct member;
+    std::shared_ptr<member> mMember;
+
 private slots:
     void sliderValueChanged(int v);
 };
+
 
 #endif // LP_MESH_SLICER_H
