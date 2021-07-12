@@ -192,46 +192,45 @@ void LP_OpenGLWidget::mouseReleaseEvent(QMouseEvent *event)
 {
     if ( Qt::LeftButton == event->button()){
         QString renderer = objectName() == "window_Shade" ? "Shade" : "Normal";//TODO non-fixed
-        mRubberBand->hide();
-        if ( !event->isAccepted()) {
-            if (!(( Qt::ControlModifier | Qt::ShiftModifier)
-                    & event->modifiers())){
-                emit g_GLSelector->ClearSelected();
-            }
 
-            //Perform selection
-            std::vector<LP_Objectw> objs = g_GLSelector->SelectInWorld(renderer,
-                                                                        mRubberBand->pos(),
-                                                                        mRubberBand->width(),
-                                                                        mRubberBand->height());
-    //        QMetaObject::invokeMethod(g_GLSelector.get(),
-    //                                  "SelectInWorld",
-    //                                  Qt::QueuedConnection,
-    //                                  Q_RETURN_ARG(LP_Objectw, o),
-    //                                  Q_ARG(QString, renderer),
-    //                                  Q_ARG(QPoint, event->pos()));
-
-            if ( !objs.empty()){
-                std::vector<QUuid> select, deselect;
-
-                if ( Qt::ShiftModifier & event->modifiers()){
-                    deselect.resize(objs.size());
-                    std::transform(objs.cbegin(), objs.cend(), deselect.begin(), [](const LP_Objectw &o){
-                        return o.lock()->Uuid();
-                    });
-                }else {
-                    select.resize(objs.size());
-                    std::transform(objs.cbegin(), objs.cend(), select.begin(), [](const LP_Objectw &o){
-                        return o.lock()->Uuid();
-                    });
-                }
-
-                emit g_GLSelector->Selected(select, deselect);
-
-                //mRenderer->UpdateGL();
-                event->accept();
-            }
+        if (!(( Qt::ControlModifier | Qt::ShiftModifier)
+                & event->modifiers())){
+            emit g_GLSelector->ClearSelected();
         }
+
+        //Perform selection
+        std::vector<LP_Objectw> objs = g_GLSelector->SelectInWorld(renderer,
+                                                                    mRubberBand->pos(),
+                                                                    mRubberBand->width(),
+                                                                    mRubberBand->height());
+//        QMetaObject::invokeMethod(g_GLSelector.get(),
+//                                  "SelectInWorld",
+//                                  Qt::QueuedConnection,
+//                                  Q_RETURN_ARG(LP_Objectw, o),
+//                                  Q_ARG(QString, renderer),
+//                                  Q_ARG(QPoint, event->pos()));
+
+        if ( !objs.empty()){
+            std::vector<QUuid> select, deselect;
+
+            if ( Qt::ShiftModifier & event->modifiers()){
+                deselect.resize(objs.size());
+                std::transform(objs.cbegin(), objs.cend(), deselect.begin(), [](const LP_Objectw &o){
+                    return o.lock()->Uuid();
+                });
+            }else {
+                select.resize(objs.size());
+                std::transform(objs.cbegin(), objs.cend(), select.begin(), [](const LP_Objectw &o){
+                    return o.lock()->Uuid();
+                });
+            }
+
+            emit g_GLSelector->Selected(select, deselect);
+
+            //mRenderer->UpdateGL();
+            event->accept();
+        }
+        mRubberBand->hide();
     }
     QOpenGLWidget::mouseReleaseEvent(event);
 }
