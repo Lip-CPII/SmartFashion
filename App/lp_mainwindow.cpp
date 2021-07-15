@@ -370,7 +370,6 @@ void LP_MainWindow::loadPlugins(const QString &path, QMenuBar *menubar)
 #elif defined Q_OS_WIN
         folderDir.setNameFilters({"*.dll"});
 #endif
-
         if ( folderDir.exists("externs")){
             QString dllPath = folderDir.absoluteFilePath("externs");
             QCoreApplication::addLibraryPath(folderDir.absoluteFilePath("externs"));
