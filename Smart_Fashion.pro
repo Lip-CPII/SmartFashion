@@ -7,6 +7,7 @@ SUBDIRS += \
     LP_Plugin_Import \
     LP_Plugin_Kinectv2_Scan \
     LP_Plugin_PIFuHD \
+    LP_Plugin_Singa_Knitting \
     Model
 
 App.depends = Functional
@@ -14,3 +15,4 @@ Functional.depends = Model
 LP_Plugin_Import.depends = Functional
 LP_Plugin_PIFuHD.depends = Functional
 LP_Plugin_HumanFeature.depends = Functional
+LP_Plugin_Singa_Knitting.depends = Functional
