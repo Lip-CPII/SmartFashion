@@ -4,7 +4,7 @@
 #include <QObject>
 
 #include "lp_functionalregistry.h"  //TODO Generalize to LP_Registry
-
+#include <memory>
 
 class QAction;
 class QOpenGLContext;

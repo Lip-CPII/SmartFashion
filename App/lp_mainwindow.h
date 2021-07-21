@@ -2,6 +2,7 @@
 #define LP_MAINWINDOW_H
 
 #include <QMainWindow>
+#include <memory>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class LP_MainWindow; }

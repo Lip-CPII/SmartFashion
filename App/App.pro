@@ -57,11 +57,15 @@ win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../OpenCV/install/relea
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../OpenCV/install/debug/bin \
     -L$$PWD/../../OpenMesh/lib
 
-unix:!macx: LIBS += -L$$PWD/../../OpenCV/install/lib/  \
+else:unix: LIBS += -L$$PWD/../../../opencv/opencv-4.5.2/install/lib/  \
     -lopencv_core \
     -lopencv_videoio \
     -lopencv_imgproc \
     -lopencv_imgcodecs \
-    -lopencv_dnn
+    -lopencv_dnn \
+    -lopencv_highgui \
+    -lopencv_aruco \
+    -lopencv_calib3d
 
 unix:!macx: LIBS += -L$$PWD/../../OpenMesh/lib/ -lOpenMeshCore
+

@@ -459,5 +459,5 @@ void LP_PoseEstimation::Estimate(const QImage &img)
                          outputFrame.cols,
                          outputFrame.rows,
                          outputFrame.step,
-                         QImage::Format_BGR888).copy();
+                         QImage::Format_RGB888).copy();
 }

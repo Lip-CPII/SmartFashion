@@ -3,6 +3,7 @@
 
 #include <QProgressBar>
 #include <QPropertyAnimation>
+#include <memory>
 
 class LP_ProgressBar : public QProgressBar
 {

@@ -122,7 +122,7 @@ QWidget *LP_YOLO_Helper::DockUi()
                             int(gray.rows), int(gray.step), QImage::Format_Grayscale8).copy();
         }
         return QImage((uchar*) frame.data, int(frame.cols),
-                        int(frame.rows), int(frame.step), QImage::Format_BGR888).copy();
+                        int(frame.rows), int(frame.step), QImage::Format_RGB888).copy();
     };
 
     //Slider

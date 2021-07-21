@@ -25,6 +25,7 @@ SOURCES += \
     Commands/lp_cmd_transform.cpp \
     Commands/lp_command.cpp \
     Commands/lp_commandmanager.cpp \
+    Functionals/garment_manipulation.cpp \
     Functionals/lp_draw_dots.cpp \
     Functionals/lp_export_obj.cpp \
     Functionals/lp_file_open.cpp \
@@ -56,6 +57,7 @@ HEADERS += \
     Commands/lp_command.h \
     Commands/lp_commandmanager.h \
     Functional_global.h \
+    Functionals/garment_manipulation.h \
     Functionals/lp_draw_dots.h \
     Functionals/lp_export_obj.h \
     Functionals/lp_file_open.h \
@@ -131,11 +133,21 @@ else:unix:!macx: {
         -lopencv_videoio \
         -lopencv_imgproc \
         -lopencv_imgcodecs \
-        -lopencv_dnn
+        -lopencv_dnn \
+        -lopencv_aruco
 
-    INCLUDEPATH += $$PWD/../../OpenCV/install/include/opencv4
-    DEPENDPATH += $$PWD/../../OpenCV/install/include/opencv4
+INCLUDEPATH += $$PWD/../../../opencv/opencv-4.5.2/install/include/opencv4
+DEPENDPATH += $$PWD/../../../opencv/opencv-4.5.2/install/include/opencv4
 }
+
+
+unix:!macx: LIBS += -L$$PWD/../../../librealsense-master/build/ -lrealsense2
+
+INCLUDEPATH += $$PWD/../../../librealsense-master/include/librealsense2
+DEPENDPATH += $$PWD/../../../librealsense-master/include/librealsense2
+
+INCLUDEPATH += $$PWD/../../../librealsense-master/examples
+DEPENDPATH += $$PWD/../../../librealsense-master/examples
 
 win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../OpenMesh/lib/ -lOpenMeshCore
 else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../OpenMesh/lib/ -lOpenMeshCored
@@ -143,16 +155,3 @@ else:unix:!macx: LIBS += -L$$PWD/../../OpenMesh/lib/ -lOpenMeshCore
 
 INCLUDEPATH += $$PWD/../../OpenMesh/include
 DEPENDPATH += $$PWD/../../OpenMesh/include
-
-win32:CONFIG(release, debug|release): {
-PATH += $$PWD/../../OpenCV/install/release/bin
-INCLUDEPATH += $$PWD/../../OpenCV/install/release/bin
-DEPENDPATH += $$PWD/../../OpenCV/install/release/bin
-}
-else:win32:CONFIG(debug, debug|release): {
-LIBS += -L$$PWD/../../OpenCV/install/debug/bin
-INCLUDEPATH += $$PWD/../../OpenCV/install/debug/bin
-DEPENDPATH += $$PWD/../../OpenCV/install/debug/bin
-}
-
-
