@@ -6,7 +6,7 @@
 #include "renderer/lp_glrenderer.h"
 
 #include <math.h>
-#include <example.hpp>
+//#include <example.hpp>
 
 #include <QVBoxLayout>
 #include <QMouseEvent>

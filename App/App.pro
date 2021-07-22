@@ -68,4 +68,3 @@ else:unix: LIBS += -L$$PWD/../../../opencv/opencv-4.5.2/install/lib/  \
     -lopencv_calib3d
 
 unix:!macx: LIBS += -L$$PWD/../../OpenMesh/lib/ -lOpenMeshCore
-

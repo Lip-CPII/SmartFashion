@@ -105,7 +105,6 @@ bool LP_Geodesic::eventFilter(QObject *watched, QEvent *event)
             }else{
                 //Select the entity vertices
 
-
                 auto c = _isMesh(mObject).lock();
                 auto &&tmp = g_GLSelector->SelectPoints3D("Shade",
                                                     c->Mesh()->points()->data(),
