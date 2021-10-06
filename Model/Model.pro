@@ -40,3 +40,9 @@ else:unix:!macx: LIBS += -L$$PWD/../../OpenMesh/lib/ -lOpenMeshCore
 
 INCLUDEPATH += $$PWD/../../OpenMesh/include
 DEPENDPATH += $$PWD/../../OpenMesh/include
+
+win32: LIBS += -L$$PWD/../../opennurbs/lib/ -lopennurbs_public
+else:unix:!macx: LIBS += -L$$PWD/../../opennurbs/lib/ -lopennurbs_public
+
+INCLUDEPATH += $$PWD/../../opennurbs/include
+DEPENDPATH += $$PWD/../../opennurbs/include

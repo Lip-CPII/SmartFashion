@@ -25,7 +25,6 @@ SOURCES += \
     Commands/lp_cmd_transform.cpp \
     Commands/lp_command.cpp \
     Commands/lp_commandmanager.cpp \
-    Functionals/garment_manipulation.cpp \
     Functionals/lp_draw_dots.cpp \
     Functionals/lp_export_obj.cpp \
     Functionals/lp_file_open.cpp \
@@ -41,6 +40,7 @@ SOURCES += \
     Functionals/lp_poseestimation.cpp \
     Functionals/lp_surfnet.cpp \
     Functionals/lp_yolo_helper.cpp \
+    Functionals/sg_3d_kintting.cpp \
     extern/Geometry.cpp \
     extern/LBO.cpp \
     extern/Mesh.cpp \
@@ -57,7 +57,6 @@ HEADERS += \
     Commands/lp_command.h \
     Commands/lp_commandmanager.h \
     Functional_global.h \
-    Functionals/garment_manipulation.h \
     Functionals/lp_draw_dots.h \
     Functionals/lp_export_obj.h \
     Functionals/lp_file_open.h \
@@ -73,7 +72,8 @@ HEADERS += \
     Functionals/lp_pick_feature_points_off.h \
     Functionals/lp_poseestimation.h \
     Functionals/lp_surfnet.h \
-    Functionals/lp_yolo_helper.h \
+    Functionals/lp_yolo_helper.h \	
+    Functionals/sg_3d_kintting.h \
     LP_Registry.h \
     extern/Geometry.h \
     extern/LBO.h \

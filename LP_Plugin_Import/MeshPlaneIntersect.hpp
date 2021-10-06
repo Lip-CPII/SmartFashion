@@ -29,6 +29,11 @@ public:
 
     class Mesh {
     public:
+
+
+        typedef std::pair<int, int> Edge;
+        typedef std::vector<Edge> EdgePath;
+
         Mesh(const std::vector<Vec3D>& vertices, const std::vector<Face>& faces) :
             vertices(vertices), faces(faces) {}
 
@@ -40,12 +45,11 @@ public:
             return _Execute(*this, plane, true);
         }
 
+        static std::vector<EdgePath> o_Edge;
     private:
         const std::vector<Vec3D>& vertices;
         const std::vector<Face>& faces;
 
-        typedef std::pair<int, int> Edge;
-        typedef std::vector<Edge> EdgePath;
         static std::vector<Path3D> _Execute(const Mesh& mesh, const Plane& plane,
             const bool isClip) {
             const auto vertexOffsets(VertexOffsets(mesh.vertices, plane));
@@ -56,6 +60,7 @@ public:
                 edgePaths.insert(edgePaths.end(), freeEdgePaths.begin(), freeEdgePaths.end());
             }
             ChainEdgePaths(edgePaths);
+            o_Edge = edgePaths;
             return ConstructGeometricPaths(mesh, edgePaths, vertexOffsets);
         }
 
@@ -347,5 +352,6 @@ private:
     MeshPlaneIntersect() {};
 };
 
+template<> std::vector<MeshPlaneIntersect<float, int>::Mesh::EdgePath> MeshPlaneIntersect<float, int>::Mesh::o_Edge = std::vector<EdgePath>();
 
 #endif // MESHPLANEINTERSECT_HPP

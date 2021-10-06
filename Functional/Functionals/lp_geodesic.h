@@ -62,8 +62,6 @@ private:
         std::vector<float> field_color;
         std::vector<float> ocolor;
 
-
-private:
         /**
          * @brief initializeGL initalize any OpenGL resource
          */

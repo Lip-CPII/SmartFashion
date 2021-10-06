@@ -3,6 +3,8 @@
 
 #include <QOpenGLWidget>
 #include <QOpenGLTextureBlitter>
+#include <QRubberBand>
+
 class LP_GLRenderer;
 
 class LP_OpenGLWidget : public QOpenGLWidget
@@ -15,6 +17,7 @@ public:
     LP_GLRenderer *Renderer() const;
     void SetRenderer(LP_GLRenderer* renderer);
 
+    void SetRubberBand(QRubberBand *rb);
 
 public slots:
     void updateTexture(QImage img);
@@ -42,9 +45,11 @@ protected:
 private:
     QOpenGLTextureBlitter *mBlitter;
     LP_GLRenderer *mRenderer;
+    QRubberBand *mRubberBand;
     QImage mTexture;
     int mDownKey = 0;
     float mCursorPos[2];
+    QPoint mCursorDownPos;
     struct member;
     member *m;
 };

@@ -84,7 +84,6 @@ struct LP_OpenGLWidget::member {
 
 LP_OpenGLWidget::LP_OpenGLWidget(QWidget *parent) : QOpenGLWidget(parent)
 {
-
     mTexture.load(":/background.jpg");
 }
 
@@ -99,6 +98,11 @@ LP_OpenGLWidget::~LP_OpenGLWidget()
 void LP_OpenGLWidget::SetRenderer(LP_GLRenderer *renderer)
 {
     mRenderer = renderer;
+}
+
+void LP_OpenGLWidget::SetRubberBand(QRubberBand *rb)
+{
+    mRubberBand = rb;
 }
 
 LP_GLRenderer *LP_OpenGLWidget::Renderer() const
@@ -174,12 +178,18 @@ void LP_OpenGLWidget::mousePressEvent(QMouseEvent *event)
     mCursorPos[1] = event->pos().y();
     event->ignore();
 
+    mCursorDownPos = event->pos();
+
+    if ( Qt::LeftButton == event->button()){
+        mRubberBand->setGeometry(QRect(mCursorDownPos, QSize(2,2)));
+        mRubberBand->show();
+    }
+
     QOpenGLWidget::mousePressEvent(event);
 }
 
 void LP_OpenGLWidget::mouseReleaseEvent(QMouseEvent *event)
 {
-    event->ignore();
     if ( Qt::LeftButton == event->button()){
         QString renderer = objectName() == "window_Shade" ? "Shade" : "Normal";//TODO non-fixed
 
@@ -187,9 +197,12 @@ void LP_OpenGLWidget::mouseReleaseEvent(QMouseEvent *event)
                 & event->modifiers())){
             emit g_GLSelector->ClearSelected();
         }
-        //Perform selection
-        std::vector<LP_Objectw> objs = g_GLSelector->SelectInWorld(renderer, event->pos());
 
+        //Perform selection
+        std::vector<LP_Objectw> objs = g_GLSelector->SelectInWorld(renderer,
+                                                                    mRubberBand->pos(),
+                                                                    mRubberBand->width(),
+                                                                    mRubberBand->height());
 //        QMetaObject::invokeMethod(g_GLSelector.get(),
 //                                  "SelectInWorld",
 //                                  Qt::QueuedConnection,
@@ -217,6 +230,7 @@ void LP_OpenGLWidget::mouseReleaseEvent(QMouseEvent *event)
             //mRenderer->UpdateGL();
             event->accept();
         }
+        mRubberBand->hide();
     }
     QOpenGLWidget::mouseReleaseEvent(event);
 }
@@ -260,6 +274,8 @@ void LP_OpenGLWidget::mouseMoveEvent(QMouseEvent *e)
 
          QMetaObject::invokeMethod(mRenderer,
                                    "updateGL",Qt::QueuedConnection);
+     } else if ( Qt::LeftButton & e->buttons()){
+         mRubberBand->setGeometry(QRect(mCursorDownPos, pos).normalized());
      }
      mRenderer->Lock().unlock();
      mCursorPos[0]  = pos.x();

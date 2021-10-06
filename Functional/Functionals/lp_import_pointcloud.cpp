@@ -21,7 +21,7 @@ QWidget *LP_Import_PointCloud::DockUi()
 bool LP_Import_PointCloud::Run()
 {
     auto file = QFileDialog::getOpenFileName(0,tr("Import Point Cloud"), "",
-                                             tr("PointCloud(*.obj)"));
+                                             tr("PointCloud(*.obj *.ply)"));
 
     if ( file.isEmpty()){
         return false;

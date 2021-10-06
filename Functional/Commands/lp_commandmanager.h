@@ -31,6 +31,7 @@ public:
     void Push(LP_Command *cmd );
     bool Save(QDataStream &o);
     void Load(QDataStream &in);
+    void Obsolete(LP_Command *cmd);
     static std::shared_ptr<LP_CommandStack> gCommands;  //TODO Multi stack
 
 signals:

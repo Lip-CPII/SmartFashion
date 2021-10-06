@@ -104,12 +104,17 @@ bool LP_Geodesic::eventFilter(QObject *watched, QEvent *event)
 
             }else{
                 //Select the entity vertices
+                auto rb = g_GLSelector->RubberBand();
 
                 auto c = _isMesh(mObject).lock();
                 auto &&tmp = g_GLSelector->SelectPoints3D("Shade",
                                                     c->Mesh()->points()->data(),
                                                     c->Mesh()->n_vertices(),
-                                                    e->pos(), true);
+                                                    rb->pos()+rb->rect().center(), false,
+                                                    rb->width(), rb->height());
+
+
+                rb->hide();
 
                 if(mFirstPoint.empty()){
                     mLabel->setText("Select the First Point");
@@ -159,8 +164,11 @@ bool LP_Geodesic::eventFilter(QObject *watched, QEvent *event)
                         }
                     }
 
+//                    for( int i = 0; i<Faces.size(); i++){
+//                        qDebug()<< Faces[i];
+//                    }
 
-                   for( int p = 0; p < (int)sf_mesh->n_vertices(); p++){
+                    for( int p = 0; p < (int)sf_mesh->n_vertices(); p++){
                         auto pp = sf_pt[p];
                         Points.push_back(pp[0]);
                         Points.push_back(pp[1]);

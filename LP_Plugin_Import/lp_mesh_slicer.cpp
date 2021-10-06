@@ -1,10 +1,14 @@
 #include "lp_mesh_slicer.h"
 #include "lp_openmesh.h"
+#include "lp_pointcloud.h"
 #include "lp_renderercam.h"
 
 #include "renderer/lp_glselector.h"
 
 #include "MeshPlaneIntersect.hpp"
+
+#include <flann/flann.hpp>
+#include <opencv2/opencv.hpp>
 
 #include <QAction>
 #include <QSlider>
@@ -26,6 +30,20 @@ typedef MeshPlaneIntersect<float, int> Intersector;
 
 std::vector<Intersector::Vec3D> vertices;
 std::vector<Intersector::Face> faces;
+
+struct LP_Mesh_Slicer::member {
+    LP_OpenMesh mMesh;
+    LP_PointCloud mPointCloud;
+
+    std::multimap<float, const QVector3D *> mYSorted;
+
+    void prepareMeshInfo(LP_Mesh_Slicer *functional);
+    void preparePointCloudInfo(LP_Mesh_Slicer *functional);
+
+    void sliceMesh(LP_Mesh_Slicer *functional, const int &vv, const float &height);
+    void slicePointCloud(LP_Mesh_Slicer *functional, const int &vv, const float &height);
+};
+
 
 LP_Mesh_Slicer::~LP_Mesh_Slicer()
 {
@@ -151,6 +169,7 @@ bool LP_Mesh_Slicer::Run()
 {
     mPool.setMaxThreadCount(std::max(1, mPool.maxThreadCount()-2));
     g_GLSelector->ClearSelected();
+    mMember = std::make_shared<member>();
     return false;
 }
 
@@ -164,13 +183,6 @@ QAction *LP_Mesh_Slicer::Trigger()
 
 bool LP_Mesh_Slicer::eventFilter(QObject *watched, QEvent *event)
 {
-    static auto _isMesh = [](LP_Objectw obj){
-        if ( obj.expired()){
-            return LP_OpenMeshw();
-        }
-        return LP_OpenMeshw() = std::static_pointer_cast<LP_OpenMeshImpl>(obj.lock());
-    };
-
     if ( QEvent::MouseButtonRelease == event->type()){
         auto e = static_cast<QMouseEvent*>(event);
 
@@ -179,35 +191,19 @@ bool LP_Mesh_Slicer::eventFilter(QObject *watched, QEvent *event)
                 auto &&objs = g_GLSelector->SelectInWorld("Shade",e->pos());
 
                 for ( auto &o : objs ){
-                    auto c_ = _isMesh(o);
-                    if ( auto c = c_.lock()){
-                        QVector3D minB, maxB;
-                        c->BoundingBox(minB, maxB);
-
-                        mRange[0] = minB.y();
-                        mRange[1] = maxB.y();
-//                        mRange[0] = minB.z();
-//                        mRange[1] = maxB.z();
-
-                        mObject = o;
-                        mLabel->setText(mObject.lock()->Uuid().toString());
-
-                        auto m = c->Mesh();
-                        vertices.resize(m->n_vertices());
-                        memcpy(vertices.data(), m->points(), m->n_vertices() * sizeof(OpMesh::Point));
-                        faces.resize(m->n_faces());
-                        auto it = faces.begin();
-
-                        for ( auto &f : m->faces()){
-                            Intersector::Face tmpF;
-                            auto it_ = tmpF.begin();
-                            for ( const auto &vx : f.vertices()){
-                                *it_++ = vx.idx();
-                            }
-                            *it++ = std::move(tmpF);
-                        }
-
+                    if ( o.expired()){
+                        continue;
+                    }
+                    if ( LP_OpenMeshImpl::mTypeName == o.lock()->TypeName()) {
+                        mMember->mMesh = std::static_pointer_cast<LP_OpenMeshImpl>(o.lock());
+                        mMember->prepareMeshInfo(this);
                         break;
+                    } else if (LP_PointCloudImpl::mTypeName == o.lock()->TypeName()) {
+                        mMember->mPointCloud = std::static_pointer_cast<LP_PointCloudImpl>(o.lock());
+                        mMember->preparePointCloudInfo(this);
+                        break;
+                    } else {
+                        continue;
                     }
                 }
             }
@@ -345,45 +341,219 @@ void LP_Mesh_Slicer::sliderValueChanged(int v)
 
 //        qDebug() << "Height : " << height;
 
-        LP_OpenMeshw mm = std::static_pointer_cast<LP_OpenMeshImpl>(mObject.lock());
-        auto m = mm.lock()->Mesh();
-        if ( m ){
-            // create the mesh object referencing the vertices and faces
-            Intersector::Mesh mesh(vertices, faces);
-
-            // by default the plane has an origin at (0,0,0) and normal (0,0,1)
-            // these can be modified, but we can also just use the default
-            Intersector::Plane plane;
-
-            plane.normal = { mNormal[0], mNormal[1], mNormal[2] };
-            plane.origin = { 0.0f, height, 0.0f };
-//            plane.origin = { 0.0f, 0.0f, height };
-
-            auto result = mesh.Intersect(plane);
-            // the result is a vector of Path3D objects, which are planar polylines
-            // in 3D space. They have an additional attribute 'isClosed' to determine
-            // if the path forms a closed loop. if false, the path is open
-            // in this case we expect one, open Path3D with one segment
-
-            const auto nPaths = result.size();
-            if ( 0 == nPaths ){
-                return;
-            }
-
-            std::vector<std::vector<QVector3D>> paths;
-            paths.resize( nPaths );
-
-            for ( size_t i=0; i<nPaths; ++i ){
-                const auto nPts = result.at(i).points.size();
-                paths.at(i).resize( nPts+1 );
-                memcpy( paths.at(i).data(), result.at(i).points.data(), nPts * sizeof(QVector3D));
-                paths.at(i)[nPts] = paths.at(i).front();
-            }
-            mLock.lockForWrite();
-            mPaths[vv] = std::move(paths);
-            mLock.unlock();
-
-            emit glUpdateRequest();
+        if (mMember->mMesh){
+            mMember->sliceMesh(this, vv, height );
+        } else if (mMember->mPointCloud) {
+            mMember->slicePointCloud(this, vv, height );
+        } else {
+            qDebug() << "No target selected !";
         }
     },v);
+}
+
+void LP_Mesh_Slicer::member::prepareMeshInfo(LP_Mesh_Slicer *functional)
+{
+    auto c = mMesh;
+    QVector3D minB, maxB;
+    c->BoundingBox(minB, maxB);
+
+    functional->mRange[0] = minB.y();
+    functional->mRange[1] = maxB.y();
+//                        mRange[0] = minB.z();
+//                        mRange[1] = maxB.z();
+
+    functional->mObject = c;
+    functional->mLabel->setText(c->Uuid().toString());
+
+    auto m = c->Mesh();
+    vertices.resize(m->n_vertices());
+    memcpy(vertices.data(), m->points(), m->n_vertices() * sizeof(OpMesh::Point));
+    faces.resize(m->n_faces());
+    auto it = faces.begin();
+
+    for ( auto &f : m->faces()){
+        Intersector::Face tmpF;
+        auto it_ = tmpF.begin();
+        for ( const auto &vx : f.vertices()){
+            *it_++ = vx.idx();
+        }
+        *it++ = std::move(tmpF);
+    }
+}
+
+void LP_Mesh_Slicer::member::preparePointCloudInfo(LP_Mesh_Slicer *functional)
+{
+    auto pc = mPointCloud;
+    QVector3D minB, maxB;
+    pc->BoundingBox(minB, maxB);
+
+    functional->mRange[0] = minB.y();
+    functional->mRange[1] = maxB.y();
+
+    functional->mObject = pc;
+    functional->mLabel->setText(pc->Uuid().toString());
+
+    mYSorted.clear();
+    for (auto &p : pc->Points()){
+        mYSorted.insert({p.y(), &p});
+    }
+}
+
+void LP_Mesh_Slicer::member::sliceMesh(LP_Mesh_Slicer *functional, const int &vv, const float &height)
+{
+    LP_OpenMeshw mm = std::static_pointer_cast<LP_OpenMeshImpl>(functional->mObject.lock());
+    auto m = mm.lock()->Mesh();
+    if ( m ){
+        // create the mesh object referencing the vertices and faces
+        Intersector::Mesh mesh(vertices, faces);
+
+        // by default the plane has an origin at (0,0,0) and normal (0,0,1)
+        // these can be modified, but we can also just use the default
+        Intersector::Plane plane;
+
+        plane.normal = { functional->mNormal[0], functional->mNormal[1], functional->mNormal[2] };
+        plane.origin = { 0.0f, height, 0.0f };
+//            plane.origin = { 0.0f, 0.0f, height };
+
+        auto result = mesh.Intersect(plane);
+        // the result is a vector of Path3D objects, which are planar polylines
+        // in 3D space. They have an additional attribute 'isClosed' to determine
+        // if the path forms a closed loop. if false, the path is open
+        // in this case we expect one, open Path3D with one segment
+
+        const auto nPaths = result.size();
+        if ( 0 == nPaths ){
+            return;
+        }
+        auto copy = Intersector::Mesh::o_Edge;
+        qDebug() << copy.front().front().first;
+
+        std::vector<std::vector<QVector3D>> paths;
+        paths.resize( nPaths );
+
+        for ( size_t i=0; i<nPaths; ++i ){
+            const auto nPts = result.at(i).points.size();
+            paths.at(i).resize( nPts+1 );
+            memcpy( paths.at(i).data(), result.at(i).points.data(), nPts * sizeof(QVector3D));
+            paths.at(i)[nPts] = paths.at(i).front();
+        }
+        functional->mLock.lockForWrite();
+        functional->mPaths[vv] = std::move(paths);
+        functional->mLock.unlock();
+
+        emit functional->glUpdateRequest();
+    }
+}
+
+void LP_Mesh_Slicer::member::slicePointCloud(LP_Mesh_Slicer *functional, const int &vv, const float &height)
+{
+    if (!mPointCloud || mYSorted.empty()) {
+        return;
+    }
+
+    std::multimap<float, cv::Point2f> xsorted;
+    const float delta = 0.25f;
+    float roi = 0.f;
+    constexpr float point_scale = 1.0f;
+    constexpr float point_scale_inv = 1.f / point_scale;
+    int expandTimes = 0;
+    while ( 3 > xsorted.size() && 1000 > ++expandTimes) {
+        roi += delta;
+        xsorted.clear();        //Redundant method
+        auto itlow = mYSorted.lower_bound(height - roi),
+             itup = mYSorted.upper_bound(height + roi);
+
+        for (auto it = itlow; it != itup; ++it){
+            xsorted.insert({it->second->x(), cv::Point2f(it->second->x(),it->second->z())});//On the xz-plane
+        }
+    }
+
+    std::vector<std::vector<cv::Point>> contours;
+    int cluster_id = -1;
+    float lastX = -std::numeric_limits<float>::max();
+    const float thres = 1.5f; //5unit
+    for (auto it = xsorted.begin(); it != xsorted.end(); ++it){
+        if ( thres < it->first - lastX ) {
+            contours.resize(contours.size()+1);
+            ++cluster_id;
+        }
+        contours.at(cluster_id).push_back(it->second * point_scale);
+        lastX = it->first;
+    }
+
+    const int nClusters = contours.size();
+
+    std::vector<std::vector<QVector3D>> loops(nClusters);
+
+    for (int i=0; i<nClusters; ++i ) {
+        if ( 3 > contours.at(i).size()) {
+            continue;
+        }
+        auto &loop = loops.at(i);
+        std::vector<cv::Point> hull;
+
+        cv::convexHull(contours.at(i), hull);
+
+//        //Smoothing
+//        cv::Point bbmin(std::numeric_limits<int>::max(),
+//                        std::numeric_limits<int>::max()),
+//                  bbmax(-bbmin);
+
+//        for ( auto &p : hull ) {
+//            bbmin.x = cv::min(bbmin.x, p.x);
+//            bbmin.y = cv::min(bbmin.y, p.y);
+//            bbmax.x = cv::max(bbmax.x, p.x);
+//            bbmax.y = cv::max(bbmax.y, p.y);
+//        }
+//        auto bbDelta = bbmax - bbmin;
+//        float img_scale = 2.0f;
+//        const auto offset = bbmin - 0.5 / img_scale * bbDelta;
+
+//        std::vector<std::vector<cv::Point>> contours(1);
+//        for ( auto &p : hull ){
+//            contours[0].emplace_back(p - offset);
+//        }
+
+//        auto kernel_d(std::max(3, int(std::min(point_scale_inv*bbDelta.x, point_scale_inv*bbDelta.y))));
+
+//        if ( 0 == kernel_d % 2 ) {
+//            kernel_d += 1;  //Make odd
+//        }
+//        const cv::Size kernel(kernel_d, kernel_d);
+
+//        std::vector<cv::Vec4i> hierachy;
+//        cv::Mat mat = cv::Mat::zeros(img_scale*bbDelta.y, img_scale*bbDelta.x, CV_8UC1);
+//        cv::drawContours(mat, contours, 0, cv::Scalar(255), -1);
+
+//        cv::GaussianBlur(mat, mat, kernel,0);
+//        cv::threshold(mat, mat, 100, 255, cv::THRESH_BINARY );
+
+//        contours.clear();
+//        cv::findContours(mat, contours, hierachy, cv::RETR_TREE, cv::CHAIN_APPROX_TC89_KCOS);
+
+//        if ( contours.empty()) {
+//            qWarning() << "No contour found ! " << i;
+//            continue;
+//        }
+
+        for ( auto p : hull/*contours[0]*/ ) {
+            //p += offset;
+            p *= point_scale_inv;
+            loop.emplace_back(p.x, height, p.y);
+        }
+        double length = 0.0;
+        auto pre = loop.front();
+        for ( int j=1; j < int(loop.size()); ++j ) {
+            length += pre.distanceToPoint(loop.at(j));
+            pre = loop.at(j);
+        }
+        qDebug() << "Length of loop : " << i << "=" << length;
+        loop.push_back(loop.front());
+    }
+
+    functional->mLock.lockForWrite();
+    functional->mPaths[vv] = loops;
+    functional->mLock.unlock();
+
+    emit functional->glUpdateRequest();
 }

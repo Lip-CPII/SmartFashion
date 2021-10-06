@@ -9,7 +9,7 @@ LP_GeometryImpl::LP_GeometryImpl(LP_Object parent) : LP_ObjectImpl(parent)
           -std::numeric_limits<float>::max(),
           -std::numeric_limits<float>::max()})
 {
-
+    mTrans.setToIdentity();
 }
 
 QMatrix4x4 LP_GeometryImpl::ModelTrans() const

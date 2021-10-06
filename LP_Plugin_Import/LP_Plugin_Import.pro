@@ -47,5 +47,6 @@ else:unix:!macx: LIBS += -L$$PWD/../../OpenMesh/lib/ -lOpenMeshCore
 INCLUDEPATH += $$PWD/../../OpenMesh/include
 DEPENDPATH += $$PWD/../../OpenMesh/include
 
-
+INCLUDEPATH += $$PWD/../../OpenCV/install/include/opencv4
+DEPENDPATH += $$PWD/../../OpenCV/install/include/opencv4
 

@@ -29,13 +29,15 @@ LP_MainWindow::LP_MainWindow(QWidget *parent)
     //Progress
     loadProgressWidget();
 
+    //loadRubberBand();
+
     //Renderers
     loadRenderers();
 
     //Selector
     loadSelector();
 
-    qDebug()<<"Pluing check begin!";
+    qDebug()<<"Pluging check begin!";
     //Load all plugins
     loadPlugins("plugins", ui->menubar);
     qDebug()<<"Pluing check finished!";
@@ -264,10 +266,19 @@ void LP_MainWindow::loadFunctionals()
 
 void LP_MainWindow::loadSelector()
 {
+    auto rb = new QRubberBand(QRubberBand::Rectangle, ui->window_Shade);
+    g_GLSelector->SetRubberBand(rb);
+    ui->window_Shade->SetRubberBand(rb);
+
+    rb = new QRubberBand(QRubberBand::Rectangle, ui->window_Normal);
+    //g_GLSelector->SetRubberBand(rb);
+    ui->window_Normal->SetRubberBand(rb);
+
     auto pSelector = ui->treeView->selectionModel();
     if ( !pSelector ){
         return;
     }
+
     connect(pSelector, &QItemSelectionModel::selectionChanged,
             [this](const QItemSelection &selected, const QItemSelection &deselected){
 
@@ -354,15 +365,29 @@ void LP_MainWindow::loadPlugins(const QString &path, QMenuBar *menubar)
     const auto folders = pluginsDir.entryList(QDir::Dirs | QDir::NoSymLinks | QDir::NoDotAndDotDot );
     for ( auto &folder : folders ){
         QDir folderDir(path + "/" + folder);
+#ifdef Q_OS_LINUX
         folderDir.setNameFilters({"*.so*"});
+#elif defined Q_OS_WIN
+        folderDir.setNameFilters({"*.dll"});
+#endif
+        if ( folderDir.exists("externs")){
+            QString dllPath = folderDir.absoluteFilePath("externs");
+            QCoreApplication::addLibraryPath(folderDir.absoluteFilePath("externs"));
+#ifdef Q_OS_WIN
+            SetDllDirectoryA(dllPath.toStdString().c_str());
+#endif
+        }
         const auto entryList = folderDir.entryList(QDir::Files | QDir::NoSymLinks);
         for (const QString &fileName : entryList) {
+
+#ifdef Q_OS_LINUX
             QFile externList(folderDir.path()+"/extern_list");
             if ( externList.exists()){  //Load the dependencies before loading the plugin
                 try {
                     if ( !externList.open(QIODevice::ReadOnly)){
                         throw std::runtime_error("Failed to parse 3rd-party list.");
                     }
+
                     QTextStream in(&externList);
                     while ( !in.atEnd()){
                         QString lib = in.readLine();
@@ -371,7 +396,9 @@ void LP_MainWindow::loadPlugins(const QString &path, QMenuBar *menubar)
                                 .arg(folderDir.path())
                                 .arg(lib); //3rd-party should be put in "externs/"
 #elif defined Q_OS_WIN
-                        lib = QString("%1.dll").arg(lib);
+                        lib = QString("%1/externs/%2.dll")
+                        .arg(folderDir.absolutePath())
+                        .arg(lib); //3rd-party should be put in "externs/";
 #endif
                         QLibrary library(lib);
                         library.setLoadHints(QLibrary::ExportExternalSymbolsHint);
@@ -380,7 +407,7 @@ void LP_MainWindow::loadPlugins(const QString &path, QMenuBar *menubar)
                             externList.close();
                             throw std::runtime_error("Failed to load library : " + library.errorString().toUtf8());
                         }else{
-                            qDebug() << "Library loaded : " << lib;
+                            qDebug() << "Dependency loaded : " << lib;
                         }
                     }
                     externList.close();
@@ -393,6 +420,7 @@ void LP_MainWindow::loadPlugins(const QString &path, QMenuBar *menubar)
                     continue;
                 }
             }
+#endif
             QPluginLoader loader(folderDir.absoluteFilePath(fileName));
             QObject *plugin = loader.instance();
             auto action = qobject_cast<LP_ActionPlugin*>(plugin);
